@@ -3,4 +3,6 @@ env
 .mp4
 .wav
 .mp3
+.txt
 .env
+.DS_Store
