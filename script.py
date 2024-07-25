@@ -12,6 +12,7 @@ AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
 AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME')
 
+# Add an extra blank line
 def convert_to_mp3(input_file, output_file):
     """Convert video to MP3 using ffmpeg"""
     command = [
@@ -24,6 +25,7 @@ def convert_to_mp3(input_file, output_file):
         output_file
     ]
     subprocess.run(command, check=True)
+
 
 def transcribe_audio(audio_file):
     """Transcribe audio using Azure OpenAI Whisper API"""
