@@ -5,7 +5,7 @@ This tool automates the process of transcribing video files using Azure OpenAI's
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Transcribes audio using Azure OpenAI's Whisper API
+- Transcribes audio using Azure OpenAI's Whisper API with expanded options
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 
@@ -40,7 +40,19 @@ This tool automates the process of transcribing video files using Azure OpenAI's
 Run the script with a video file or directory as an argument:
 
 ```
-python script.py <video_file_or_directory>
+python script.py <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--temperature <temperature>]
+```
+
+### Options
+
+- `--language`: Specify the language of the audio (default: "en").
+- `--prompt`: Optional prompt to guide the model's transcription.
+- `--temperature`: The sampling temperature, between 0 and 1 (default: 0).
+
+Example:
+
+```
+python script.py my_video.mp4 --language es --prompt "This is a test prompt" --temperature 0.5
 ```
 
 - If a file is provided, it will process that single file.
