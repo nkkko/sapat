@@ -35,6 +35,18 @@ This tool automates the process of transcribing video files using Azure OpenAI's
    AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name_here
    ```
 
+## Creating a Dev Environment with Daytona
+
+**Steps to Set Up Daytona Workspace**
+
+1. Create [Daytona](https://github.com/daytonaio/daytona) Workspace:
+
+    ```bash
+    daytona create https://github.com/nkkko/sapat --code
+    ```
+
+2. There is no second step.
+
 ## Usage
 
 Run the script with a video file or directory as an argument:
@@ -68,3 +80,28 @@ This tool is designed for use with Azure OpenAI's Whisper API. Make sure you hav
 ## License
 
 [MIT License](LICENSE)
+
+## Claude.ai did this
+
+```
+_____     _____ ____________________     _____
+  __/\____\\___ /_____\\\\\\\\\\\\\\\\\\\\\/____/___/\__
+ /__/\/_____\\_//_______\\\\\\\\\\\\\\\\\\\\\/__/_/\___\/\
+ \_\/    444444  666666  1111  88888   222222    \_\/  \_\/
+ /\     4    4  6        1  1  8    8  2     2    /\    /\
+/  \    4    4  6        1  1  8    8        2   /  \  /  \
+\   \   444444  666666   1  1  888888      2    /    \/
+ \  /       4   6    6   1  1  8    8    2     /  /\  /\
+  \/        4   6    6   1  1  8    8   2     /  /  \/  \
+  /\        4    66666  11111  888888  222222/  /        \
+ /  \                                        \_/          \
+/    \  >>>>>>> S.A.P.A.T. SYSTEM ONLINE <<<<<<<           \
+\     \ >>>> SYNTHESIZING AUDIO PROCESSING <<<<<           /
+ \    / >>>> AND TRANSCRIPTION TECHNOLOGY <<<<< __________/
+  \  /  >>>>> INITIALIZING NEURAL MATRIX <<<<<</
+   \/   >>>>>>>> PREPARE FOR UPLOAD <<<<<<<<<</
+   /\  /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+  /  \/                                        \____________
+ /      /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\
+/______/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \_
+```
