@@ -1,0 +1,19 @@
+{
+    "name": "Video Transcription Tool",
+    "image": "mcr.microsoft.com/devcontainers/python:3.9-buster",
+    "customizations": {
+      "vscode": {
+        "settings": {
+          "python.defaultInterpreterPath": "/usr/local/bin/python",
+          "python.linting.enabled": true,
+          "python.linting.pylintEnabled": true
+        },
+        "extensions": [
+          "ms-python.python",
+          "ms-python.vscode-pylance",
+          "njpwerner.autodocstring"
+        ]
+      }
+    },
+    "postCreateCommand": "pip install -r requirements.txt"
+  }
