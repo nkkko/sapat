@@ -13,18 +13,18 @@ AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
 AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
 AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME')
 
-# Add an extra blank line
-def convert_to_mp3(input_file, output_file):
-    """Convert video to MP3 using ffmpeg"""
-    command = [
-        'ffmpeg',
-        '-i', input_file,
-        '-vn',
-        '-ar', '44100',
-        '-ac', '2',
-        '-b:a', '192k',
-        output_file
-    ]
+def convert_to_mp3(input_file, output_file, quality):
+    """Convert video to MP3 using ffmpeg with specified quality"""
+    if quality == 'L':
+        ffmpeg_options = ['-ar', '22050', '-ac', '1', '-b:a', '96k']
+    elif quality == 'M':
+        ffmpeg_options = ['-ar', '44100', '-ac', '1', '-b:a', '96k']
+    elif quality == 'H':
+        ffmpeg_options = ['-ar', '44100', '-ac', '2', '-b:a', '192k']
+    else:
+        raise ValueError("Invalid quality option. Choose from 'L', 'M', 'H'.")
+
+    command = ['ffmpeg', '-i', input_file, '-vn'] + ffmpeg_options + [output_file]
     subprocess.run(command, check=True)
 
 def transcribe_audio(
@@ -79,7 +79,7 @@ def transcribe_audio(
     else:
         raise Exception(f"Transcription failed: {response.text}")
 
-def process_file(input_file, language, prompt, temperature):
+def process_file(input_file, language, prompt, temperature, quality):
     """Process a single video file"""
     input_path = Path(input_file)
     mp3_file = input_path.with_suffix('.mp3')
@@ -90,7 +90,7 @@ def process_file(input_file, language, prompt, temperature):
     # Check if MP3 file already exists
     if not mp3_file.exists():
         # Convert to MP3
-        convert_to_mp3(str(input_path), str(mp3_file))
+        convert_to_mp3(str(input_path), str(mp3_file), quality)
         print("Conversion to MP3 completed")
     else:
         print("MP3 file already exists, skipping conversion")
@@ -113,14 +113,14 @@ def process_file(input_file, language, prompt, temperature):
     # Clean up MP3 file
     mp3_file.unlink()
 
-def main(input_path, language, prompt, temperature):
+def main(input_path, language, prompt, temperature, quality):
     input_path = Path(input_path)
 
     if input_path.is_file():
-        process_file(input_path, language, prompt, temperature)
+        process_file(input_path, language, prompt, temperature, quality)
     elif input_path.is_dir():
         for file in input_path.glob('*.mp4'):
-            process_file(file, language, prompt, temperature)
+            process_file(file, language, prompt, temperature, quality)
     else:
         print(f"{input_path} is not a valid file or directory.")
 
@@ -130,7 +130,8 @@ if __name__ == "__main__":
     parser.add_argument("--language", default="en", help="Language of the audio (default: en)")
     parser.add_argument("--prompt", help="Optional prompt to guide the model")
     parser.add_argument("--temperature", type=float, default=0, help="Sampling temperature (default: 0)")
+    parser.add_argument("--quality", choices=['L', 'M', 'H'], default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 
     args = parser.parse_args()
 
-    main(args.input_path, args.language, args.prompt, args.temperature)
+    main(args.input_path, args.language, args.prompt, args.temperature, args.quality)

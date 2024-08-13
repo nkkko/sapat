@@ -4,5 +4,7 @@ env
 *.wav
 *.mp3
 *.txt
-*.env
+
+.env
+
 .DS_Store

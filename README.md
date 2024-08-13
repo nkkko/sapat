@@ -48,11 +48,12 @@ python script.py <video_file_or_directory> [--language <language>] [--prompt <pr
 - `--language`: Specify the language of the audio (default: "en").
 - `--prompt`: Optional prompt to guide the model's transcription.
 - `--temperature`: The sampling temperature, between 0 and 1 (default: 0).
+- `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
 
 Example:
 
 ```
-python script.py my_video.mp4 --language es --prompt "This is a test prompt" --temperature 0.5
+python script.py my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5
 ```
 
 - If a file is provided, it will process that single file.
