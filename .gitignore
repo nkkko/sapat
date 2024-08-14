@@ -1,10 +1,65 @@
-env
+# Ignore environment directory
+env/
 
+# Python specific ignores
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore virtualenv
+venv/
+ENV/
+env.bak/
+env/
+
+# Ignore PyInstaller artifacts
+*.spec
+*.log
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Ignore macOS specific files
+.DS_Store
+
+# Ignore backup files
+*.bak
+
+# Ignore audio and video files
 *.mp4
 *.wav
 *.mp3
+
+# Ignore text files
 *.txt
 
+# Ignore dotenv file for storing sensitive information
 .env
+# Ignore distribution/build directories
+dist/
+build/
+*.egg-info/
+.eggs/
+wheelhouse/
 
-.DS_Store
+# Ignore coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Ignore mypy cache
+.mypy_cache/
+.cache/
+
+# Ignore temporary files created by editors
+*.swp
+*~
+
+# Ignore log files
+*.log
