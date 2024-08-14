@@ -1,0 +1,18 @@
+[project]
+name = "sapat"
+version = "0.1.1"
+description = "Video Transcription Tool using Azure OpenAI's Whisper API"
+requires-python = ">=3.6"
+dependencies = [
+    "click",
+    "requests",
+    "python-dotenv",
+    "openai"
+]
+
+[project.scripts]
+sapat = "script:main"
+
+[build-system]
+requires = ["wheel", "setuptools>=61.0"] # Ensure setuptools is recent enough
+build-backend = "setuptools.build_meta"

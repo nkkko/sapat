@@ -31,8 +31,41 @@ This tool automates the process of transcribing video files using Azure OpenAI's
 3. Create a `.env` file in the project root and add your Azure OpenAI credentials:
    ```
    AZURE_OPENAI_API_KEY=your_api_key_here
-   AZURE_OPENAI_ENDPOINT=your_endpoint_here
-   AZURE_OPENAI_DEPLOYMENT_NAME=your_deployment_name_here
+   AZURE_OPENAI_ENDPOINT=https://DEPLOYMENTENDPOINTNAME.openai.azure.com
+   AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER=whisper
+   AZURE_OPENAI_API_VERSION_WHISPER=2024-06-01
+   AZURE_OPENAI_DEPLOYMENT_NAME_CHAT=gpt-4o
+   AZURE_OPENAI_API_VERSION_CHAT=2023-03-15-preview
+   ```
+
+## Building and Installing the Package
+
+3. **Build the Distribution:**
+   Now, use build to create your package:
+
+   ```bash
+   python -m build
+   ```
+
+   This will create the wheel file in the dist directory, just like before.
+
+4. **Install the Wheel:**
+   Install as before:
+
+   ```bash
+   pip install dist/sapat-0.1.1-py3-none-any.whl  # Replace with the actual filename
+   ```
+
+5. **Add to PATH (if needed):**
+   The installation process usually automatically adds the script to your PATH. If not, you'll need to add the location of the installed script to your system's PATH environment variable. The location will be something like:
+   - **Linux/macOS:** `~/.local/bin`
+   - **Windows:** `%USERPROFILE%\AppData\Local\Programs\Python\Python39\Scripts` (replace `Python39` with your Python version)
+
+   For example, on Linux/macOS:
+
+   ```bash
+   echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+   source ~/.zshrc
    ```
 
 ## Creating a Dev Environment with Daytona
@@ -41,9 +74,9 @@ This tool automates the process of transcribing video files using Azure OpenAI's
 
 1. Create [Daytona](https://github.com/daytonaio/daytona) Workspace:
 
-    ```bash
-    daytona create https://github.com/nkkko/sapat --code
-    ```
+   ```bash
+   daytona create https://github.com/nkkko/sapat --code
+   ```
 
 2. There is no second step.
 
@@ -52,7 +85,7 @@ This tool automates the process of transcribing video files using Azure OpenAI's
 Run the script with a video file or directory as an argument:
 
 ```
-python script.py <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--temperature <temperature>]
+sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--temperature <temperature>]
 ```
 
 ### Options
@@ -65,7 +98,7 @@ python script.py <video_file_or_directory> [--language <language>] [--prompt <pr
 Example:
 
 ```
-python script.py my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5
+sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5
 ```
 
 - If a file is provided, it will process that single file.
@@ -81,7 +114,7 @@ This tool is designed for use with Azure OpenAI's Whisper API. Make sure you hav
 
 [MIT License](LICENSE)
 
-## Claude.ai did this
+## Claude.ai did the heavy lifting
 
 ```
 _____     _____ ____________________     _____
@@ -105,3 +138,7 @@ _____     _____ ____________________     _____
  /      /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\  /\
 /______/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \/  \_
 ```
+
+---
+
+This updated README includes the correct `.env` example and the additional steps for building and installing the Python package, as well as ensuring that the script is available in the PATH if needed.

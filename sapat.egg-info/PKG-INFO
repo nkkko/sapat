@@ -1,0 +1,9 @@
+Metadata-Version: 2.1
+Name: sapat
+Version: 0.1.1
+Summary: Video Transcription Tool using Azure OpenAI's Whisper API
+Requires-Python: >=3.6
+Requires-Dist: click
+Requires-Dist: requests
+Requires-Dist: python-dotenv
+Requires-Dist: openai

@@ -3,7 +3,8 @@ import subprocess
 import requests
 from dotenv import load_dotenv
 from pathlib import Path
-import argparse
+import click
+from openai import AzureOpenAI
 
 # Load environment variables
 load_dotenv()
@@ -11,7 +12,10 @@ load_dotenv()
 # Azure OpenAI configuration
 AZURE_OPENAI_API_KEY = os.getenv('AZURE_OPENAI_API_KEY')
 AZURE_OPENAI_ENDPOINT = os.getenv('AZURE_OPENAI_ENDPOINT')
-AZURE_OPENAI_DEPLOYMENT_NAME = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME')
+AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER')
+AZURE_OPENAI_API_VERSION_WHISPER = os.getenv("AZURE_OPENAI_API_VERSION_WHISPER")
+AZURE_OPENAI_DEPLOYMENT_NAME_CHAT = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_CHAT')
+AZURE_OPENAI_API_VERSION_CHAT = os.getenv("AZURE_OPENAI_API_VERSION_CHAT")
 
 def convert_to_mp3(input_file, output_file, quality):
     """Convert video to MP3 using ffmpeg with specified quality"""
@@ -49,7 +53,7 @@ def transcribe_audio(
     Returns:
     - If response_format is "json" or "verbose_json", returns a dictionary. Otherwise, returns a string.
     """
-    url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT_NAME}/audio/transcriptions?api-version=2024-02-01"
+    url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER}/audio/translations?api-version={AZURE_OPENAI_API_VERSION_WHISPER}"
 
     headers = {
         "api-key": AZURE_OPENAI_API_KEY,
@@ -79,59 +83,87 @@ def transcribe_audio(
     else:
         raise Exception(f"Transcription failed: {response.text}")
 
-def process_file(input_file, language, prompt, temperature, quality):
-    """Process a single video file"""
+def process_file(input_file, language, prompt, temperature, quality, correct):
     input_path = Path(input_file)
     mp3_file = input_path.with_suffix('.mp3')
     txt_file = input_path.with_suffix('.txt')
 
-    print(f"Processing {input_file}")
+    click.echo(f"Processing {input_file}")
 
-    # Check if MP3 file already exists
     if not mp3_file.exists():
-        # Convert to MP3
         convert_to_mp3(str(input_path), str(mp3_file), quality)
-        print("Conversion to MP3 completed")
+        click.echo("Conversion to MP3 completed")
     else:
-        print("MP3 file already exists, skipping conversion")
+        click.echo("MP3 file already exists, skipping conversion")
 
-    # Transcribe
     transcription_result = transcribe_audio(str(mp3_file), language=language, prompt=prompt, temperature=temperature)
-    print("Transcription completed")
+    click.echo("Transcription completed")
 
-    # Save transcription
+    if correct:
+        system_prompt = "You are a helpful assistant. Your task is to correct any spelling discrepancies in the transcribed text. Make sure that the names of the following products are spelled correctly: {user provided prompt} Only add necessary punctuation such as periods, commas, and capitalization, and use only the context provided."
+        corrected_text = generate_corrected_transcript(0.7, system_prompt, str(mp3_file))
+        click.echo("Correction completed")
+    else:
+        corrected_text = transcription_result
+
     with open(txt_file, 'w', encoding='utf-8') as f:
-        if isinstance(transcription_result, dict):
-            # If it's a dictionary, assume it's JSON and extract the 'text' field
-            # Adjust this based on the actual structure of your JSON response
-            f.write(transcription_result.get('text', ''))
+        if isinstance(corrected_text, dict):
+            f.write(corrected_text.get('text', ''))
         else:
-            # If it's not a dictionary, assume it's already a string
-            f.write(transcription_result)
-    print(f"Transcription saved to {txt_file}")
+            f.write(corrected_text)
+    click.echo(f"Transcription saved to {txt_file}")
 
-    # Clean up MP3 file
     mp3_file.unlink()
 
-def main(input_path, language, prompt, temperature, quality):
+def generate_corrected_transcript(temperature, system_prompt, audio_file):
+    client = AzureOpenAI(
+        api_key=AZURE_OPENAI_API_KEY,
+        azure_endpoint=AZURE_OPENAI_ENDPOINT,
+        api_version=AZURE_OPENAI_API_VERSION_CHAT
+    )
+
+    transcription = transcribe_audio(audio_file, "")
+    transcription_text = transcription.get('text', '') if isinstance(transcription, dict) else transcription
+
+    response = client.chat.completions.create(
+        model=AZURE_OPENAI_DEPLOYMENT_NAME_CHAT,
+        temperature=temperature,
+        messages=[
+            {
+                "role": "system",
+                "content": system_prompt
+            },
+            {
+                "role": "user",
+                "content": transcription_text
+            }
+        ]
+    )
+    return response.choices[0].message.content
+
+
+@click.command()
+@click.argument("input_path", type=click.Path(exists=True))
+@click.option("--language", "-l", default="en", help="Language of the audio (default: en)")
+@click.option("--prompt", "-p", help="Optional prompt to guide the model")
+@click.option("--temperature", "-t", type=float, default=0, help="Sampling temperature (default: 0)")
+@click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
+@click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
+def main(input_path, language, prompt, temperature, quality, correct):
+    """
+    Transcribe video files using Azure OpenAI Whisper API.
+
+    INPUT_PATH is the path to the video file or directory containing video files.
+    """
     input_path = Path(input_path)
 
     if input_path.is_file():
-        process_file(input_path, language, prompt, temperature, quality)
+        process_file(input_path, language, prompt, temperature, quality, correct)
     elif input_path.is_dir():
         for file in input_path.glob('*.mp4'):
-            process_file(file, language, prompt, temperature, quality)
+            process_file(file, language, prompt, temperature, quality, correct)
     else:
-        print(f"{input_path} is not a valid file or directory.")
+        click.echo(f"{input_path} is not a valid file or directory.")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Transcribe video files using Azure OpenAI Whisper API.")
-    parser.add_argument("input_path", help="Path to the video file or directory containing video files")
-    parser.add_argument("--language", default="en", help="Language of the audio (default: en)")
-    parser.add_argument("--prompt", help="Optional prompt to guide the model")
-    parser.add_argument("--temperature", type=float, default=0, help="Sampling temperature (default: 0)")
-    parser.add_argument("--quality", choices=['L', 'M', 'H'], default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
-
-    args = parser.parse_args()
-
-    main(args.input_path, args.language, args.prompt, args.temperature, args.quality)
+    main()
