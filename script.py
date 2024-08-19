@@ -113,7 +113,7 @@ def transcribe_audio(
     else:
         raise ValueError("Invalid provider. Choose from 'azure', 'rev'.")
 
-def process_file(input_file, language, prompt, temperature, quality, correct):
+def process_file(input_file, provider, language, prompt, temperature, quality, correct):
     input_path = Path(input_file)
     mp3_file = input_path.with_suffix('.mp3')
     txt_file = input_path.with_suffix('.txt')
@@ -126,7 +126,7 @@ def process_file(input_file, language, prompt, temperature, quality, correct):
     else:
         click.echo("MP3 file already exists, skipping conversion")
 
-    transcription_result = transcribe_audio(str(mp3_file), language=language, prompt=prompt, temperature=temperature)
+    transcription_result = transcribe_audio(str(mp3_file), provider=provider, language=language, prompt=prompt, temperature=temperature)
     click.echo("Transcription completed")
 
     if correct:
@@ -174,12 +174,13 @@ def generate_corrected_transcript(temperature, system_prompt, audio_file):
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
+@click.option("--provider", default="azure", help="The API provider (default: azure)")
 @click.option("--language", "-l", default="en", help="Language of the audio (default: en)")
 @click.option("--prompt", "-p", help="Optional prompt to guide the model")
 @click.option("--temperature", "-t", type=float, default=0, help="Sampling temperature (default: 0)")
 @click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 @click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
-def main(input_path, language, prompt, temperature, quality, correct):
+def main(input_path, provider, language, prompt, temperature, quality, correct):
     """
     Transcribe video files using Azure OpenAI Whisper API.
 
@@ -188,10 +189,10 @@ def main(input_path, language, prompt, temperature, quality, correct):
     input_path = Path(input_path)
 
     if input_path.is_file():
-        process_file(input_path, language, prompt, temperature, quality, correct)
+        process_file(input_path, provider, language, prompt, temperature, quality, correct)
     elif input_path.is_dir():
         for file in input_path.glob('*.mp4'):
-            process_file(file, language, prompt, temperature, quality, correct)
+            process_file(file, provider, language, prompt, temperature, quality, correct)
     else:
         click.echo(f"{input_path} is not a valid file or directory.")
 
