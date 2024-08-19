@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from pathlib import Path
 import click
 from openai import AzureOpenAI
+from rev_ai import apiclient
 
 # Load environment variables
 load_dotenv()
@@ -16,6 +17,9 @@ AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_W
 AZURE_OPENAI_API_VERSION_WHISPER = os.getenv("AZURE_OPENAI_API_VERSION_WHISPER")
 AZURE_OPENAI_DEPLOYMENT_NAME_CHAT = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_CHAT')
 AZURE_OPENAI_API_VERSION_CHAT = os.getenv("AZURE_OPENAI_API_VERSION_CHAT")
+
+# Rev AI configuration
+REVAI_ACCESS_TOKEN = os.getenv('REVAI_ACCESS_TOKEN')
 
 def convert_to_mp3(input_file, output_file, quality):
     """Convert video to MP3 using ffmpeg with specified quality"""
@@ -31,28 +35,14 @@ def convert_to_mp3(input_file, output_file, quality):
     command = ['ffmpeg', '-i', input_file, '-vn'] + ffmpeg_options + [output_file]
     subprocess.run(command, check=True)
 
-def transcribe_audio(
+def transcribe_audio_azure(
     audio_file,
-    language="en",
-    prompt=None,
-    response_format="json",
-    temperature=0,
-    timestamp_granularities=None
+    language,
+    prompt,
+    response_format,
+    temperature,
+    timestamp_granularities
 ):
-    """
-    Transcribe audio using Azure OpenAI Whisper API with expanded options.
-
-    Parameters:
-    - audio_file (str): Path to the audio file to transcribe.
-    - language (str, optional): The language of the input audio. Defaults to "en".
-    - prompt (str, optional): An optional text to guide the model's style or continue a previous audio segment.
-    - response_format (str, optional): The format of the transcript output. Options are: "json", "text", "srt", "verbose_json", or "vtt". Defaults to "json".
-    - temperature (float, optional): The sampling temperature, between 0 and 1. Defaults to 0.
-    - timestamp_granularities (list, optional): List of timestamp granularities to include. Options are: "word", "segment". Defaults to None.
-
-    Returns:
-    - If response_format is "json" or "verbose_json", returns a dictionary. Otherwise, returns a string.
-    """
     url = f"{AZURE_OPENAI_ENDPOINT}/openai/deployments/{AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER}/audio/translations?api-version={AZURE_OPENAI_API_VERSION_WHISPER}"
 
     headers = {
@@ -82,6 +72,46 @@ def transcribe_audio(
             return response.text
     else:
         raise Exception(f"Transcription failed: {response.text}")
+
+def transcribe_audio_rev(audio_file, response_format):
+    client = apiclient.RevAiAPIClient(REVAI_ACCESS_TOKEN)
+    job = client.submit_job_local_file(audio_file)
+
+    if response_format in ["json", "verbose_json"]:
+        return client.get_transcript_json(job.id)
+    else:
+        return client.get_transcript_text(job.id)
+
+def transcribe_audio(
+    audio_file,
+    provider="azure",
+    language="en",
+    prompt=None,
+    response_format="json",
+    temperature=0,
+    timestamp_granularities=None
+):
+    """
+    Transcribe audio using Azure OpenAI Whisper API with expanded options.
+
+    Parameters:
+    - audio_file (str): Path to the audio file to transcribe.
+    - provider (str, optional): The API provider to use. Defaults to "azure".
+    - language (str, optional): The language of the input audio. Defaults to "en".
+    - prompt (str, optional): An optional text to guide the model's style or continue a previous audio segment.
+    - response_format (str, optional): The format of the transcript output. Options are: "json", "text", "srt", "verbose_json", or "vtt". Defaults to "json".
+    - temperature (float, optional): The sampling temperature, between 0 and 1. Defaults to 0.
+    - timestamp_granularities (list, optional): List of timestamp granularities to include. Options are: "word", "segment". Defaults to None.
+
+    Returns:
+    - If response_format is "json" or "verbose_json", returns a dictionary. Otherwise, returns a string.
+    """
+    if provider == "azure":
+        transcribe_audio_azure(audio_file, language, prompt, response_format, temperature, timestamp_granularities)
+    elif provider == "rev":
+        transcribe_audio_rev(audio_file, response_format)
+    else:
+        raise ValueError("Invalid provider. Choose from 'azure', 'rev'.")
 
 def process_file(input_file, language, prompt, temperature, quality, correct):
     input_path = Path(input_file)
