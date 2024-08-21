@@ -8,6 +8,7 @@ dependencies = [
     "requests",
     "python-dotenv",
     "openai",
+    "groq",
     "rev_ai"
 ]
 

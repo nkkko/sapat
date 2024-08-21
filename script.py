@@ -4,7 +4,8 @@ import requests
 from dotenv import load_dotenv
 from pathlib import Path
 import click
-from openai import AzureOpenAI
+from openai import OpenAI, AzureOpenAI
+from groq import Groq
 from rev_ai import apiclient
 
 # Load environment variables
@@ -17,6 +18,18 @@ AZURE_OPENAI_DEPLOYMENT_NAME_WHISPER = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_W
 AZURE_OPENAI_API_VERSION_WHISPER = os.getenv("AZURE_OPENAI_API_VERSION_WHISPER")
 AZURE_OPENAI_DEPLOYMENT_NAME_CHAT = os.getenv('AZURE_OPENAI_DEPLOYMENT_NAME_CHAT')
 AZURE_OPENAI_API_VERSION_CHAT = os.getenv("AZURE_OPENAI_API_VERSION_CHAT")
+
+# OpenAI configuration
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+OPENAI_ENDPOINT = os.getenv('OPENAI_ENDPOINT')
+OPENAI_MODEL = os.getenv('OPENAI_MODEL')
+OPENAI_MODEL_CHAT = os.getenv('OPENAI_MODEL_CHAT')
+
+# Groq OpenAI configuration
+GROQ_OPENAI_API_KEY = os.getenv('GROQ_OPENAI_API_KEY')
+GROQ_OPENAI_ENDPOINT = os.getenv('GROQ_OPENAI_ENDPOINT')
+GROQ_MODEL = os.getenv('GROQ_MODEL')
+GROQ_MODEL_CHAT = os.getenv('GROQ_MODEL_CHAT')
 
 # Rev AI configuration
 REVAI_ACCESS_TOKEN = os.getenv('REVAI_ACCESS_TOKEN')
@@ -73,6 +86,26 @@ def transcribe_audio_azure(
     else:
         raise Exception(f"Transcription failed: {response.text}")
 
+def transcribe_audio_openai(
+    client,
+    model,
+    audio_file,
+    language,
+    prompt,
+    response_format,
+    temperature
+):
+    with open(audio_file, "rb") as file:
+        transcription = client.audio.transcriptions.create(
+            file=(audio_file, file.read()),
+            model=model,
+            prompt=prompt,
+            response_format=response_format,
+            language=language,
+            temperature=temperature
+        )
+        return transcription.text
+
 def transcribe_audio_rev(audio_file, response_format):
     client = apiclient.RevAiAPIClient(REVAI_ACCESS_TOKEN)
     job = client.submit_job_local_file(audio_file)
@@ -84,7 +117,7 @@ def transcribe_audio_rev(audio_file, response_format):
 
 def transcribe_audio(
     audio_file,
-    provider="azure",
+    api="azure",
     language="en",
     prompt=None,
     response_format="json",
@@ -96,7 +129,7 @@ def transcribe_audio(
 
     Parameters:
     - audio_file (str): Path to the audio file to transcribe.
-    - provider (str, optional): The API provider to use. Defaults to "azure".
+    - api (str, optional): The API to use. Defaults to "azure".
     - language (str, optional): The language of the input audio. Defaults to "en".
     - prompt (str, optional): An optional text to guide the model's style or continue a previous audio segment.
     - response_format (str, optional): The format of the transcript output. Options are: "json", "text", "srt", "verbose_json", or "vtt". Defaults to "json".
@@ -106,14 +139,25 @@ def transcribe_audio(
     Returns:
     - If response_format is "json" or "verbose_json", returns a dictionary. Otherwise, returns a string.
     """
-    if provider == "azure":
+    if api == "azure":
         transcribe_audio_azure(audio_file, language, prompt, response_format, temperature, timestamp_granularities)
-    elif provider == "rev":
+    elif api == "openai":
+        client = OpenAI(
+            base_url=OPENAI_ENDPOINT,
+            api_key=OPENAI_API_KEY
+        )
+        model = OPENAI_MODEL
+        transcribe_audio_openai(client, model, audio_file, language, prompt, response_format, temperature)
+    elif api == "groq":
+        client = Groq()
+        model = GROQ_MODEL
+        transcribe_audio_openai(client, model, audio_file, language, prompt, response_format, temperature)
+    elif api == "rev":
         transcribe_audio_rev(audio_file, response_format)
     else:
-        raise ValueError("Invalid provider. Choose from 'azure', 'rev'.")
+        raise ValueError("Invalid api. Choose from 'azure', 'openai', 'groq', 'rev'.")
 
-def process_file(input_file, provider, language, prompt, temperature, quality, correct):
+def process_file(input_file, api, language, prompt, temperature, quality, correct):
     input_path = Path(input_file)
     mp3_file = input_path.with_suffix('.mp3')
     txt_file = input_path.with_suffix('.txt')
@@ -126,12 +170,12 @@ def process_file(input_file, provider, language, prompt, temperature, quality, c
     else:
         click.echo("MP3 file already exists, skipping conversion")
 
-    transcription_result = transcribe_audio(str(mp3_file), provider=provider, language=language, prompt=prompt, temperature=temperature)
+    transcription_result = transcribe_audio(str(mp3_file), api=api, language=language, prompt=prompt, temperature=temperature)
     click.echo("Transcription completed")
 
     if correct:
         system_prompt = "You are a helpful assistant. Your task is to correct any spelling discrepancies in the transcribed text. Make sure that the names of the following products are spelled correctly: {user provided prompt} Only add necessary punctuation such as periods, commas, and capitalization, and use only the context provided."
-        corrected_text = generate_corrected_transcript(0.7, system_prompt, str(mp3_file))
+        corrected_text = generate_corrected_transcript(api, 0.7, system_prompt, str(mp3_file))
         click.echo("Correction completed")
     else:
         corrected_text = transcription_result
@@ -145,18 +189,9 @@ def process_file(input_file, provider, language, prompt, temperature, quality, c
 
     mp3_file.unlink()
 
-def generate_corrected_transcript(temperature, system_prompt, audio_file):
-    client = AzureOpenAI(
-        api_key=AZURE_OPENAI_API_KEY,
-        azure_endpoint=AZURE_OPENAI_ENDPOINT,
-        api_version=AZURE_OPENAI_API_VERSION_CHAT
-    )
-
-    transcription = transcribe_audio(audio_file, "")
-    transcription_text = transcription.get('text', '') if isinstance(transcription, dict) else transcription
-
+def generate_corrected_transcript_openai(client, model, temperature, system_prompt, audio_file):
     response = client.chat.completions.create(
-        model=AZURE_OPENAI_DEPLOYMENT_NAME_CHAT,
+        model=model,
         temperature=temperature,
         messages=[
             {
@@ -172,27 +207,53 @@ def generate_corrected_transcript(temperature, system_prompt, audio_file):
     return response.choices[0].message.content
 
 
+def generate_corrected_transcript(api, temperature, system_prompt, audio_file):
+    transcription = transcribe_audio(audio_file, api, "")
+    transcription_text = transcription.get('text', '') if isinstance(transcription, dict) else transcription
+
+    if api == "azure" or api == "rev":
+        client = AzureOpenAI(
+            api_key=AZURE_OPENAI_API_KEY,
+            azure_endpoint=AZURE_OPENAI_ENDPOINT,
+            api_version=AZURE_OPENAI_API_VERSION_CHAT
+        )
+        model = AZURE_OPENAI_DEPLOYMENT_NAME_CHAT
+        generate_corrected_transcript_openai(client, model, temperature, system_prompt, audio_file)
+    elif api == "openai":
+        client = OpenAI(
+            base_url=OPENAI_ENDPOINT,
+            api_key=OPENAI_API_KEY
+        )
+        model = OPENAI_MODEL_CHAT
+        generate_corrected_transcript_openai(client, model, temperature, system_prompt, audio_file)
+    elif api == "groq":
+        client = Groq()
+        model = GROQ_MODEL_CHAT
+        generate_corrected_transcript_openai(client, model, temperature, system_prompt, audio_file)
+    else:
+        raise ValueError("Invalid api. Choose from 'azure', 'openai', 'groq', 'rev'.")
+
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
-@click.option("--provider", default="azure", help="The API provider (default: azure)")
+@click.option("--api", default="azure", help="The API (default: azure)")
 @click.option("--language", "-l", default="en", help="Language of the audio (default: en)")
 @click.option("--prompt", "-p", help="Optional prompt to guide the model")
 @click.option("--temperature", "-t", type=float, default=0, help="Sampling temperature (default: 0)")
 @click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 @click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
-def main(input_path, provider, language, prompt, temperature, quality, correct):
+def main(input_path, api, language, prompt, temperature, quality, correct):
     """
-    Transcribe video files using Azure OpenAI Whisper API.
+    Transcribe video files using the OpenAI Whisper API.
 
     INPUT_PATH is the path to the video file or directory containing video files.
     """
     input_path = Path(input_path)
 
     if input_path.is_file():
-        process_file(input_path, provider, language, prompt, temperature, quality, correct)
+        process_file(input_path, api, language, prompt, temperature, quality, correct)
     elif input_path.is_dir():
         for file in input_path.glob('*.mp4'):
-            process_file(file, provider, language, prompt, temperature, quality, correct)
+            process_file(file, api, language, prompt, temperature, quality, correct)
     else:
         click.echo(f"{input_path} is not a valid file or directory.")
 
