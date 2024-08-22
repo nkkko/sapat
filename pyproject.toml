@@ -7,7 +7,9 @@ dependencies = [
     "click",
     "requests",
     "python-dotenv",
-    "openai"
+    "openai",
+    "groq",
+    "rev_ai"
 ]
 
 [project.scripts]
