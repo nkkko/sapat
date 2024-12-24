@@ -1,7 +1,7 @@
 [project]
 name = "sapat"
-version = "0.1.1"
-description = "Video Transcription Tool using Azure OpenAI's Whisper API"
+version = "0.1.2"
+description = "Video Transcription Tool using different APIs"
 requires-python = ">=3.6"
 dependencies = [
     "click",
