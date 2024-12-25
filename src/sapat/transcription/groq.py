@@ -5,7 +5,7 @@ from groq import Groq
 from .base import TranscriptionBase
 
 # Load environment variables
-load_dotenv()
+load_dotenv(".env")
 
 class GroqCloudTranscription(TranscriptionBase):
     """

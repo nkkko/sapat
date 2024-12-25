@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from .base import TranscriptionBase
 
 # Load environment variables
-load_dotenv()
+load_dotenv(".env")
 
 class AzureTranscription(TranscriptionBase):
     """
