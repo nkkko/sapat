@@ -2,7 +2,6 @@ import click
 from pathlib import Path
 from .transcription.groq import GroqCloudTranscription
 from .transcription.azure import AzureTranscription
-from .transcription.base import TranscriptionBase
 from .transcription.openai import OpenAITranscription
 
 @click.command()
