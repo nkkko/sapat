@@ -1,9 +1,9 @@
 import click
 from pathlib import Path
-from transcription.groq import GroqCloudTranscription
-from transcription.azure import AzureTranscription
-from transcription.base import TranscriptionBase
-from transcription.openai import OpenAITranscription
+from .transcription.groq import GroqCloudTranscription
+from .transcription.azure import AzureTranscription
+from .transcription.base import TranscriptionBase
+from .transcription.openai import OpenAITranscription
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
@@ -15,7 +15,7 @@ from transcription.openai import OpenAITranscription
 @click.option("--api", "-a", type=click.Choice(['groq', 'azure'], case_sensitive=False), required=True, help="API to use for the transcription ('groq' or 'azure')")
 def main(input_path, language, prompt, temperature, quality, correct, api):
     """
-    Transcribe video files using Groq or Azure APIs.
+    Transcribe video files using different APIs.
 
     INPUT_PATH is the path to the video file or directory containing video files.
     """

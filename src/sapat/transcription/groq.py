@@ -2,7 +2,7 @@ import os
 import requests
 from dotenv import load_dotenv
 from groq import Groq
-from transcription.base import TranscriptionBase
+from .base import TranscriptionBase
 
 # Load environment variables
 load_dotenv()

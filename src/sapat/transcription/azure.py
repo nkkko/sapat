@@ -2,7 +2,7 @@ import os
 import requests
 from openai import AzureOpenAI
 from dotenv import load_dotenv
-from transcription.base import TranscriptionBase
+from .base import TranscriptionBase
 
 # Load environment variables
 load_dotenv()
