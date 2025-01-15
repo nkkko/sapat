@@ -1,0 +1,6 @@
+python-dotenv
+requests
+click
+openai
+groq
+build
