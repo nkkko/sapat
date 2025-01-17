@@ -1,6 +1,6 @@
 {
     "name": "Video Transcription Tool",
-    "image": "mcr.microsoft.com/devcontainers/python:3.9-buster",
+    "image": "mcr.microsoft.com/devcontainers/python:3.12",
     "customizations": {
       "vscode": {
         "settings": {
