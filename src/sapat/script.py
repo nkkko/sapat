@@ -11,7 +11,7 @@ from .transcription.openai import OpenAITranscription
 @click.option("--temperature", "-t", type=float, default=0.3, help="Sampling temperature (default: 0.3)")
 @click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 @click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
-@click.option("--api", "-a", type=click.Choice(['groq', 'azure'], case_sensitive=False), required=True, help="API to use for the transcription ('groq' or 'azure')")
+@click.option("--api", "-a", type=click.Choice(['openai', 'groq', 'azure'], case_sensitive=True), required=True, help="API to use for the transcription ('openai', 'groq' or 'azure')")
 def main(input_path, language, prompt, temperature, quality, correct, api):
     """
     Transcribe video files using different APIs.
