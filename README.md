@@ -119,7 +119,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 Example:
 
 ```
-sapat --api groq my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5
+sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
 
 - If a file is provided, it will process that single file.
