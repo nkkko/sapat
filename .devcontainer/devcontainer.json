@@ -22,12 +22,13 @@
         "type": "bind"
       }
     ],
+    "remoteUser": "vscode",
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
-      "debugging-ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}"
+      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}"
     },
-    "_postCreateCommand": {
+    "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
-      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder} && pip install -r requirements.txt"
+      "requirements": "pip install -r requirements.txt"
     }
 }
