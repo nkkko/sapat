@@ -15,13 +15,15 @@
         ]
       }
     },
-    "mounts": [{
-      "source": "${localEnv:HOME}",
-      "target": "${containerWorkspaceFolder}/con-home",
-      "type": "bind"
-    }],
+    "mounts": [
+      {
+        "source": "${localEnv:HOME}",
+        "target": "${containerWorkspaceFolder}/con-home",
+        "type": "bind"
+      }
+    ],
     "onCreateCommand": {
-      "update": "sudo apt update && sudo apt upgrade -y && echo remote user is ${remoteUser} and workspace is ${containerWorkspaceFolder}"
+      "update": "sudo apt update && sudo apt upgrade -y && echo remote user is ${remoteUser} and workspace is ${containerWorkspaceFolder} and home is ${localEnv:HOME}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
