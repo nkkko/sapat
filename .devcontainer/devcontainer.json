@@ -25,7 +25,7 @@
     "updateRemoteUserUID": false,
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
-      "ownership": "sudo chown -R ${containerUser}:${containerUser} ${containerWorkspaceFolder}"
+      "ownership": "sudo chown -R ${containerEnv:USER}:${containerEnv:USER} ${containerWorkspaceFolder}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
