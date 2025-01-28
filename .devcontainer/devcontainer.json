@@ -22,7 +22,7 @@
         "type": "bind"
       }
     ],
-    "containerUser": "vscode",
+    "updateRemoteUserUID": false,
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
       "ownership": "sudo chown -R ${containerUser}:${containerUser} ${containerWorkspaceFolder}"
