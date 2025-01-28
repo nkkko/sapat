@@ -22,10 +22,10 @@
         "type": "bind"
       }
     ],
-    "remoteUser": "vscode",
+    "containerUser": "vscode",
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
-      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}"
+      "ownership": "sudo chown -R ${containerUser}:${containerUser} ${containerWorkspaceFolder}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
