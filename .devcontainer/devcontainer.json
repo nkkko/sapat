@@ -21,10 +21,10 @@
       "type": "bind"
     }],
     "onCreateCommand": {
-      "update": "sudo apt update && sudo apt upgrade -y",
-      "ffmpeg": "sudo apt install ffmpeg -y"
+      "update": "sudo apt update && sudo apt upgrade -y"
     },
     "postCreateCommand": {
       "ownership": "chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}",
+      "ffmpeg": "sudo apt install ffmpeg -y",
       "rrequirement": "pip install -r requirements.txt"
   }
