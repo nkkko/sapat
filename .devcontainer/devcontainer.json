@@ -26,9 +26,8 @@
       "update": "sudo apt update && sudo apt upgrade -y",
       "debugging-ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}"
     },
-    "postCreateCommand": {
+    "_postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
-      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder} && pip install -r requirements.txt",
-      "debugging": "echo remote user is ${remoteUser} and workspace is ${containerWorkspaceFolder} and home is ${localEnv:HOME}"
+      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder} && pip install -r requirements.txt"
     }
 }
