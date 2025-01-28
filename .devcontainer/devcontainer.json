@@ -23,10 +23,11 @@
       }
     ],
     "onCreateCommand": {
-      "update": "sudo apt update && sudo apt upgrade -y && echo remote user is ${remoteUser} and workspace is ${containerWorkspaceFolder} and home is ${localEnv:HOME}"
+      "update": "sudo apt update && sudo apt upgrade -y"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
-      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder} && pip install -r requirements.txt"
+      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${remoteWorkspaceFolder} && pip install -r requirements.txt",
+      "debugging": "echo remote user is ${remoteUser} and workspace is ${remoteWorkspaceFolder} and home is ${localEnv:HOME}"
     }
 }
