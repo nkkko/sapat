@@ -21,7 +21,7 @@
       "type": "bind"
     }],
     "onCreateCommand": {
-      "update": "sudo apt update && sudo apt upgrade -y"
+      "update": "sudo apt update && sudo apt upgrade -y && echo remote user is ${remoteUser} and workspace is ${containerWorkspaceFolder}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
