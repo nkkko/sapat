@@ -24,7 +24,7 @@
       "update": "sudo apt update && sudo apt upgrade -y"
     },
     "postCreateCommand": {
-      "ownership": "chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}",
+      "ownership": "sudo chown -R ${remoteUser}:${remoteUser} ${containerWorkspaceFolder}",
       "ffmpeg": "sudo apt install ffmpeg -y",
       "rrequirement": "pip install -r requirements.txt"
   }
