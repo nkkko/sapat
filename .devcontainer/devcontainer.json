@@ -22,10 +22,9 @@
         "type": "bind"
       }
     ],
-    "updateRemoteUserUID": false,
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
-      "ownership": "sudo chown -R ${containerEnv:USER}:${containerEnv:USER} ${containerWorkspaceFolder}"
+      "ownership": "sudo chown -R vscode:vscode ${containerWorkspaceFolder}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
