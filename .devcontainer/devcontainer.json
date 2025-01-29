@@ -15,7 +15,7 @@
         ]
       }
     },
-    "mounts": [
+    "_mounts": [
       {
         "source": "${localEnv:HOME}",
         "target": "${containerWorkspaceFolder}/con-home",
@@ -24,7 +24,7 @@
     ],
     "onCreateCommand": {
       "update": "sudo apt update && sudo apt upgrade -y",
-      "ownership": "sudo chown -R vscode:vscode ${containerWorkspaceFolder}"
+      "ownership": "sudo chown -R $USER:$USER ${containerWorkspaceFolder}"
     },
     "postCreateCommand": {
       "ffmpeg": "sudo apt install ffmpeg -y",
