@@ -15,7 +15,7 @@
         ]
       }
     },
-    "_mounts": [
+    "mounts": [
       {
         "source": "${localEnv:HOME}",
         "target": "${containerWorkspaceFolder}/con-home",
