@@ -15,5 +15,19 @@
         ]
       }
     },
-    "postCreateCommand": "pip install -r requirements.txt && sudo apt update && sudo apt upgrade -y && sudo apt install ffmpeg -y"
-  }
+    "mounts": [
+      {
+        "source": "${localEnv:HOME}",
+        "target": "${containerWorkspaceFolder}/con-home",
+        "type": "bind"
+      }
+    ],
+    "onCreateCommand": {
+      "update": "sudo apt update && sudo apt upgrade -y",
+      "ownership": "sudo chown -R $USER:$USER ${containerWorkspaceFolder}"
+    },
+    "postCreateCommand": {
+      "ffmpeg": "sudo apt install ffmpeg -y",
+      "requirements": "pip install -r requirements.txt"
+    }
+}
