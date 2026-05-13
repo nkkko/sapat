@@ -1,4 +1,5 @@
 import os
+import mimetypes
 from pathlib import Path
 
 import requests
@@ -8,6 +9,9 @@ from .base import TranscriptionBase
 
 
 load_dotenv(".env")
+
+
+SUPPORTED_EXTENSIONS = (".mp3", ".wav", ".flac", ".m4a", ".ogg")
 
 
 class ElevenLabsTranscription(TranscriptionBase):
@@ -51,9 +55,10 @@ class ElevenLabsTranscription(TranscriptionBase):
         }
 
         audio_path = Path(audio_file)
-        with open(audio_file, "rb") as f:
+        content_type = mimetypes.guess_type(audio_path.name)[0] or "application/octet-stream"
+        with audio_path.open("rb") as f:
             files = {
-                "file": (audio_path.name, f, "audio/mpeg"),
+                "file": (audio_path.name, f, content_type),
             }
             response = requests.post(
                 self.endpoint,
@@ -66,7 +71,9 @@ class ElevenLabsTranscription(TranscriptionBase):
         if response.status_code == 200:
             return response.json()
 
-        raise Exception(f"Transcription failed: {response.text}")
+        raise Exception(
+            f"Transcription failed with status {response.status_code}: {response.text}"
+        )
 
     def _validate_audio_file(self, audio_file: str):
         if not self.api_key:
@@ -75,9 +82,9 @@ class ElevenLabsTranscription(TranscriptionBase):
         if not os.path.exists(audio_file):
             raise ValueError(f"File {audio_file} does not exist.")
 
-        valid_extensions = [".mp3", ".wav", ".flac", ".m4a", ".ogg"]
-        if not any(str(audio_file).endswith(ext) for ext in valid_extensions):
+        extension = Path(audio_file).suffix.lower()
+        if extension not in SUPPORTED_EXTENSIONS:
             raise ValueError(
                 f"Unsupported audio file format: {audio_file}. "
-                f"Supported formats are {valid_extensions}."
+                f"Supported formats are {list(SUPPORTED_EXTENSIONS)}."
             )

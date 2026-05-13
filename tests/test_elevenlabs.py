@@ -47,6 +47,29 @@ class ElevenLabsTranscriptionTests(unittest.TestCase):
         )
         self.assertEqual(kwargs["timeout"], 120)
         self.assertIn("file", kwargs["files"])
+        self.assertEqual(kwargs["files"]["file"][2], "audio/mpeg")
+
+    def test_transcribe_audio_reports_provider_failure_status(self):
+        response = Mock()
+        response.status_code = 401
+        response.text = "invalid api key"
+
+        with tempfile.NamedTemporaryFile(suffix=".mp3") as audio:
+            audio.write(b"fake audio")
+            audio.flush()
+
+            with patch.dict(os.environ, {"ELEVENLABS_API_KEY": "test-key"}):
+                transcriber = ElevenLabsTranscription(temperature=0.2)
+
+            with patch(
+                "sapat.transcription.elevenlabs.requests.post",
+                return_value=response,
+            ):
+                with self.assertRaisesRegex(
+                    Exception,
+                    "Transcription failed with status 401",
+                ):
+                    transcriber.transcribe_audio(audio.name)
 
     def test_validate_audio_file_requires_api_key(self):
         with patch.dict(os.environ, {"ELEVENLABS_API_KEY": ""}):

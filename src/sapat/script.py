@@ -21,6 +21,12 @@ def main(input_path, language, prompt, temperature, quality, correct, api):
     """
     # Initialize the correct transcription object
     input_path = Path(input_path)
+    if api.lower() == "elevenlabs" and correct:
+        click.echo(
+            "Transcript correction is not supported for ElevenLabs. "
+            "Run without --correct or choose openai, groq, or azure."
+        )
+        return
 
     # Handle file processing based on API choice
     if api.lower() == "groq":
