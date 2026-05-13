@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and Google Cloud Speech-to-Text APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and Google Cloud Speech-to-Text APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Google Cloud Speech-to-Text API
 
 ## Installation
 
@@ -53,6 +54,13 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Google Cloud Speech-to-Text
+   GOOGLE_SPEECH_API_KEY=your_google_speech_api_key_here
+   GOOGLE_SPEECH_API_ENDPOINT=https://speech.googleapis.com/v1p1beta1/speech:recognize
+   GOOGLE_SPEECH_MODEL=latest_long
+   GOOGLE_SPEECH_LANGUAGE=en-US
+   GOOGLE_SPEECH_USE_ENHANCED=false
    ```
 
 ## Building and Installing the Package
@@ -115,6 +123,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api google` for Google Cloud Speech-to-Text API
 
 Example:
 
@@ -129,7 +138,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, OpenAI, and Google Cloud Speech-to-Text). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
