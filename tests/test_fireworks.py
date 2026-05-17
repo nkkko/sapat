@@ -108,6 +108,35 @@ def test_transcribe_rejects_bad_extension(monkeypatch, tmp_path):
         raise AssertionError("expected ValueError")
 
 
+def test_transcribe_audio_raises_on_http_error(tmp_path, monkeypatch):
+    monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test_key")
+    monkeypatch.setenv("FIREWORKS_MODEL", "whisper-v3")
+    monkeypatch.delenv("FIREWORKS_API_ENDPOINT", raising=False)
+
+    audio = tmp_path / "clip.mp3"
+    audio.write_bytes(b"x")
+
+    from importlib import reload
+    import sapat.transcription.fireworks as fireworks
+
+    reload(fireworks)
+
+    fake_resp = MagicMock()
+    fake_resp.status_code = 400
+    fake_resp.text = "bad request body"
+
+    with patch.object(fireworks.requests, "post", return_value=fake_resp):
+        svc = fireworks.FireworksTranscription(temperature=0.0)
+
+        try:
+            svc.transcribe_audio(str(audio))
+        except Exception as e:
+            assert "Transcription failed" in str(e)
+            assert "bad request body" in str(e)
+        else:
+            raise AssertionError("expected Exception")
+
+
 def test_corrected_transcript_requires_chat_model(monkeypatch, tmp_path):
     monkeypatch.setenv("FIREWORKS_API_KEY", "fw_test_key")
     monkeypatch.setenv("FIREWORKS_MODEL", "whisper-v3")
