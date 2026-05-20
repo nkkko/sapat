@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, IBM Watson Speech to Text, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, IBM Watson Speech to Text, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -17,6 +17,7 @@ This tool automates the process of transcribing video files using multiple trans
 - API access for one or more supported services:
   - Azure OpenAI API
   - Groq Cloud API
+  - IBM Watson Speech to Text API
   - OpenAI API
 
 ## Installation
@@ -53,6 +54,12 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # IBM Watson Speech to Text
+   IBM_WATSON_STT_API_KEY=your_ibm_watson_api_key_here
+   IBM_WATSON_STT_URL=https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/your_instance_id
+   IBM_WATSON_STT_MODEL=en-US_BroadbandModel
+   IBM_WATSON_STT_SMART_FORMATTING=true
    ```
 
 ## Building and Installing the Package
@@ -114,6 +121,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
+   - `--api ibm` for IBM Watson Speech to Text API
    - `--api openai` for OpenAI API
 
 Example:
