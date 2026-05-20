@@ -59,6 +59,8 @@ This tool automates the process of transcribing video files using multiple trans
    DEEPINFRA_TOKEN=your_deepinfra_token_here
    DEEPINFRA_MODEL=openai/whisper-large
    DEEPINFRA_API_ENDPOINT=https://api.deepinfra.com/v1/audio/transcriptions
+   DEEPINFRA_MODEL_NAME_CHAT=deepseek-ai/DeepSeek-V3
+   DEEPINFRA_OPENAI_BASE_URL=https://api.deepinfra.com/v1/openai
    ```
 
 ## Building and Installing the Package

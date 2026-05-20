@@ -50,6 +50,67 @@ class DeepInfraTranscriptionTest(unittest.TestCase):
         finally:
             audio_path.unlink(missing_ok=True)
 
+    def test_generate_corrected_transcript_uses_deepinfra_chat_endpoint(self):
+        from sapat.transcription.deepinfra import DeepInfraTranscription
+
+        choice = Mock()
+        choice.message.content = "corrected transcript"
+        completion = Mock()
+        completion.choices = [choice]
+
+        chat_completions = Mock()
+        chat_completions.create.return_value = completion
+
+        chat = Mock()
+        chat.completions = chat_completions
+
+        client = Mock()
+        client.chat = chat
+
+        env = {
+            "DEEPINFRA_TOKEN": "test-token",
+            "DEEPINFRA_MODEL_NAME_CHAT": "meta-llama/test-chat-model",
+            "DEEPINFRA_OPENAI_BASE_URL": "https://api.deepinfra.com/v1/openai",
+        }
+
+        with patch.dict(os.environ, env, clear=False), patch(
+            "sapat.transcription.deepinfra.OpenAI", return_value=client
+        ) as openai, patch.object(
+            DeepInfraTranscription,
+            "transcribe_audio",
+            return_value={"text": "raw transcript"},
+        ):
+            transcriber = DeepInfraTranscription(temperature=0.2)
+            result = transcriber.generate_corrected_transcript(
+                "audio.mp3",
+                0.7,
+                "Correct spelling only.",
+            )
+
+        self.assertEqual(result, "corrected transcript")
+        openai.assert_called_once_with(
+            api_key="test-token",
+            base_url="https://api.deepinfra.com/v1/openai",
+        )
+        chat_completions.create.assert_called_once()
+
+        _, kwargs = chat_completions.create.call_args
+        self.assertEqual(kwargs["model"], "meta-llama/test-chat-model")
+        self.assertEqual(kwargs["temperature"], 0.7)
+        self.assertEqual(
+            kwargs["messages"],
+            [
+                {
+                    "role": "system",
+                    "content": "Correct spelling only.",
+                },
+                {
+                    "role": "user",
+                    "content": "raw transcript",
+                },
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2,6 +2,7 @@ import os
 
 import requests
 from dotenv import load_dotenv
+from openai import OpenAI
 
 from .base import TranscriptionBase
 
@@ -17,9 +18,17 @@ class DeepInfraTranscription(TranscriptionBase):
     def __init__(self, temperature: float, response_format: str = "json"):
         self.api_key = os.getenv("DEEPINFRA_TOKEN")
         self.model = os.getenv("DEEPINFRA_MODEL", "openai/whisper-large")
+        self.model_name_chat = os.getenv(
+            "DEEPINFRA_MODEL_NAME_CHAT",
+            "deepseek-ai/DeepSeek-V3",
+        )
         self.endpoint = os.getenv(
             "DEEPINFRA_API_ENDPOINT",
             "https://api.deepinfra.com/v1/audio/transcriptions",
+        )
+        self.openai_base_url = os.getenv(
+            "DEEPINFRA_OPENAI_BASE_URL",
+            "https://api.deepinfra.com/v1/openai",
         )
         self.temperature = temperature
         self.response_format = response_format
@@ -53,6 +62,33 @@ class DeepInfraTranscription(TranscriptionBase):
                 return response.json()
             return response.text
         raise Exception(f"Transcription failed: {response.text}")
+
+    def generate_corrected_transcript(
+        self, audio_file: str, temperature: float, system_prompt: str
+    ):
+        client = OpenAI(api_key=self.api_key, base_url=self.openai_base_url)
+
+        transcription = self.transcribe_audio(audio_file)
+        transcription_text = (
+            transcription.get("text", "") if isinstance(transcription, dict)
+            else transcription
+        )
+
+        response = client.chat.completions.create(
+            model=self.model_name_chat,
+            temperature=temperature,
+            messages=[
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                },
+                {
+                    "role": "user",
+                    "content": transcription_text,
+                },
+            ],
+        )
+        return response.choices[0].message.content
 
     def _validate_audio_file(self, audio_file: str):
         if not os.path.exists(audio_file):
