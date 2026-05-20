@@ -3,6 +3,7 @@ from pathlib import Path
 from .transcription.groq import GroqCloudTranscription
 from .transcription.azure import AzureTranscription
 from .transcription.openai import OpenAITranscription
+from .transcription.lemonfox import LemonfoxTranscription
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
@@ -11,7 +12,7 @@ from .transcription.openai import OpenAITranscription
 @click.option("--temperature", "-t", type=float, default=0.3, help="Sampling temperature (default: 0.3)")
 @click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 @click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
-@click.option("--api", "-a", type=click.Choice(['openai', 'groq', 'azure'], case_sensitive=True), required=True, help="API to use for the transcription ('openai', 'groq' or 'azure')")
+@click.option("--api", "-a", type=click.Choice(['openai', 'groq', 'azure', 'lemonfox'], case_sensitive=True), required=True, help="API to use for the transcription ('openai', 'groq', 'azure' or 'lemonfox')")
 def main(input_path, language, prompt, temperature, quality, correct, api):
     """
     Transcribe video files using different APIs.
@@ -28,6 +29,8 @@ def main(input_path, language, prompt, temperature, quality, correct, api):
         transcriber = AzureTranscription(temperature=temperature)
     elif api.lower() == "openai":
         transcriber = OpenAITranscription(temperature=temperature)
+    elif api.lower() == "lemonfox":
+        transcriber = LemonfoxTranscription(temperature=temperature)
     else:
         click.echo(f"Unsupported API: {api}")
         return
