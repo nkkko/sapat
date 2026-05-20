@@ -11,6 +11,11 @@ dependencies = [
     "groq>=0.13.1"
 ]
 
+[project.optional-dependencies]
+local = [
+    "faster-whisper>=1.1.0"
+]
+
 [project.scripts]
 sapat = "sapat.script:main"
 

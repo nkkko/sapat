@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and a local faster-whisper model. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI APIs, and local faster-whisper models
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Optional local faster-whisper runtime for offline transcription
 
 ## Installation
 
@@ -53,7 +54,17 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Local faster-whisper
+   SAPAT_LOCAL_WHISPER_MODEL=base
+   SAPAT_LOCAL_WHISPER_DEVICE=cpu
+   SAPAT_LOCAL_WHISPER_COMPUTE_TYPE=int8
+   SAPAT_LOCAL_WHISPER_BEAM_SIZE=5
    ```
+
+   The local provider loads `faster-whisper` only when `--api local` is used.
+   Install it with `pip install faster-whisper` or `pip install '.[local]'`
+   if you want offline transcription.
 
 ## Building and Installing the Package
 
@@ -115,11 +126,18 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api local` for local faster-whisper transcription
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+```
+
+Offline local transcription example:
+
+```
+sapat meeting_recording.mp4 --quality M --language en --prompt "Product names: Sapat, Daytona" --api local
 ```
 
 - If a file is provided, it will process that single file.
@@ -129,7 +147,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI) and local faster-whisper. Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use. The local provider does not require a remote API key, but it does require enough CPU or GPU capacity for the selected Whisper model.
 
 ## License
 
