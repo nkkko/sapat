@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, NVIDIA ASR NIM, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, NVIDIA ASR NIM, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -17,6 +17,7 @@ This tool automates the process of transcribing video files using multiple trans
 - API access for one or more supported services:
   - Azure OpenAI API
   - Groq Cloud API
+  - NVIDIA ASR NIM API
   - OpenAI API
 
 ## Installation
@@ -53,6 +54,11 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # NVIDIA ASR NIM
+   NVIDIA_NIM_API_KEY=your_nvidia_api_key_here
+   NVIDIA_NIM_BASE_URL=https://integrate.api.nvidia.com/v1
+   NVIDIA_NIM_MODEL=nvidia/parakeet-ctc-0.6b-asr
    ```
 
 ## Building and Installing the Package
@@ -114,6 +120,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
+   - `--api nvidia` for NVIDIA ASR NIM
    - `--api openai` for OpenAI API
 
 Example:
