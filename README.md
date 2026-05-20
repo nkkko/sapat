@@ -1,21 +1,22 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Cloudflare Workers AI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Cloudflare Workers AI, Groq, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
 
 ## Prerequisites
 
-- Python 3.6+
+- Python 3.8+
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
+  - Cloudflare Workers AI API
   - Groq Cloud API
   - OpenAI API
 
@@ -53,6 +54,12 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Cloudflare Workers AI
+   CLOUDFLARE_ACCOUNT_ID=your_cloudflare_account_id_here
+   CLOUDFLARE_API_TOKEN=your_cloudflare_api_token_here
+   CLOUDFLARE_WHISPER_MODEL=@cf/openai/whisper
+   CLOUDFLARE_MAX_FILE_SIZE_MB=25
    ```
 
 ## Building and Installing the Package
@@ -113,6 +120,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
+   - `--api cloudflare` for Cloudflare Workers AI
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
 
@@ -122,6 +130,12 @@ Example:
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
 
+Cloudflare Workers AI example:
+
+```
+sapat my_video.mp4 --quality M --api cloudflare
+```
+
 - If a file is provided, it will process that single file.
 - If a directory is provided, it will process all `.mp4` files in that directory.
 
@@ -129,7 +143,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Cloudflare Workers AI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 

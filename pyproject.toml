@@ -2,7 +2,7 @@
 name = "sapat"
 version = "0.1.2"
 description = "Video Transcription Tool using different APIs"
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 dependencies = [
     "click>=8.1.8",
     "requests>=2.32.3",
