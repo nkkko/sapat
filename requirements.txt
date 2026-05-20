@@ -4,3 +4,5 @@ click
 openai
 groq
 build
+
+boto3
