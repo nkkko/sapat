@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Gladia, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Gladia, Groq, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -16,6 +16,7 @@ This tool automates the process of transcribing video files using multiple trans
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
+  - Gladia API
   - Groq Cloud API
   - OpenAI API
 
@@ -53,6 +54,13 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Gladia
+   GLADIA_API_KEY=your_gladia_api_key_here
+   GLADIA_UPLOAD_ENDPOINT=https://api.gladia.io/v2/upload
+   GLADIA_TRANSCRIPTION_ENDPOINT=https://api.gladia.io/v2/pre-recorded
+   GLADIA_POLL_INTERVAL_SECONDS=5
+   GLADIA_TIMEOUT_SECONDS=900
    ```
 
 ## Building and Installing the Package
@@ -113,6 +121,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
+   - `--api gladia` for Gladia API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
 
