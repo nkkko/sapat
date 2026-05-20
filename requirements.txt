@@ -3,4 +3,5 @@ requests
 click
 openai
 groq
+soniox
 build
