@@ -20,7 +20,9 @@ class ScriptTests(unittest.TestCase):
 
         self.assertEqual(result.exit_code, 0)
         transcriber_cls.assert_called_once_with(temperature=0.3)
-        transcriber.process_file.assert_called_once()
+        transcriber.process_file.assert_called_once_with(
+            video_path, "en", None, 0.3, "M", False
+        )
 
     def test_replicate_api_rejects_correct_flag(self):
         with tempfile.TemporaryDirectory() as tmpdir:

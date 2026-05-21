@@ -46,10 +46,10 @@ class ReplicateTranscription(TranscriptionBase):
         if not self.api_token:
             raise ValueError("REPLICATE_API_TOKEN must be set to use the Replicate API.")
 
-        os.environ["REPLICATE_API_TOKEN"] = self.api_token
+        client = replicate.Client(api_token=self.api_token)
 
         with open(audio_file, "rb") as audio:
-            output = replicate.run(
+            output = client.run(
                 self.model_ref,
                 input=self._build_input(audio, kwargs),
             )
@@ -78,11 +78,13 @@ class ReplicateTranscription(TranscriptionBase):
                 if isinstance(value, str):
                     return value
             if isinstance(output.get("segments"), list):
-                return " ".join(
+                text = " ".join(
                     segment.get("text", "").strip()
                     for segment in output["segments"]
                     if isinstance(segment, dict) and segment.get("text")
                 ).strip()
+                if text:
+                    return text
 
         if isinstance(output, list):
             return "".join(str(part) for part in output)
