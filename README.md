@@ -1,23 +1,24 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and NanoGPT APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and NanoGPT APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
 
 ## Prerequisites
 
-- Python 3.6+
+- Python 3.8+
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - NanoGPT API
 
 ## Installation
 
@@ -53,6 +54,13 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # NanoGPT
+   NANOGPT_API_KEY=your_nanogpt_api_key_here
+   NANOGPT_MODEL=Whisper-Large-V3
+   NANOGPT_API_ENDPOINT=https://nano-gpt.com/api/v1/audio/transcriptions
+   NANOGPT_CHAT_MODEL=your_preferred_chat_model_for_correction
+   NANOGPT_CHAT_ENDPOINT=https://nano-gpt.com/api/v1/chat/completions
    ```
 
 ## Building and Installing the Package
@@ -115,12 +123,27 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api nanogpt` for NanoGPT API
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
+
+NanoGPT example:
+
+```
+sapat my_video.mp4 --quality M --language en --api nanogpt
+```
+
+NanoGPT correction example:
+
+```
+sapat my_video.mp4 --quality M --language en --api nanogpt --correct
+```
+
+When using `--correct` with NanoGPT, set `NANOGPT_CHAT_MODEL` so Sapat can call NanoGPT's OpenAI-compatible chat endpoint to clean up the raw transcript.
 
 - If a file is provided, it will process that single file.
 - If a directory is provided, it will process all `.mp4` files in that directory.
@@ -129,7 +152,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, OpenAI, and NanoGPT). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
