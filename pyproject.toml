@@ -11,6 +11,11 @@ dependencies = [
     "groq>=0.13.1"
 ]
 
+[project.optional-dependencies]
+vosk = [
+    "vosk>=0.3.45"
+]
+
 [project.scripts]
 sapat = "sapat.script:main"
 
