@@ -52,6 +52,28 @@ class SarvamTranscriptionTests(unittest.TestCase):
                 with self.assertRaisesRegex(ValueError, "SARVAM_API_KEY"):
                     SarvamTranscription(temperature=0.3).transcribe_audio(audio.name)
 
+    def test_cli_language_overrides_env_default(self):
+        with mock.patch.dict(os.environ, {"SARVAM_LANGUAGE_CODE": "unknown"}, clear=False):
+            transcriber = SarvamTranscription(temperature=0.3)
+            self.assertEqual(transcriber._language_code("ta"), "ta-IN")
+
+    def test_blank_optional_env_uses_endpoint_default(self):
+        with mock.patch.dict(
+            os.environ,
+            {
+                "SARVAM_STT_ENDPOINT": "",
+                "SARVAM_STT_MODEL": "",
+                "SARVAM_STT_MODE": "",
+                "SARVAM_LANGUAGE_CODE": "",
+            },
+            clear=False,
+        ):
+            transcriber = SarvamTranscription(temperature=0.3)
+            self.assertEqual(transcriber.endpoint, "https://api.sarvam.ai/speech-to-text")
+            self.assertEqual(transcriber.model, "saaras:v3")
+            self.assertEqual(transcriber.mode, "transcribe")
+            self.assertIsNone(transcriber.default_language_code)
+
     def test_cli_accepts_sarvam_api_choice(self):
         runner = main.make_context(
             "sapat",

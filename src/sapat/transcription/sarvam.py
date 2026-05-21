@@ -48,10 +48,10 @@ class SarvamTranscription(TranscriptionBase):
         - temperature (float): Accepted for CLI compatibility with other providers.
         """
         self.api_key = os.getenv("SARVAM_API_KEY")
-        self.endpoint = os.getenv("SARVAM_STT_ENDPOINT", "https://api.sarvam.ai/speech-to-text")
-        self.model = os.getenv("SARVAM_STT_MODEL", "saaras:v3")
-        self.mode = os.getenv("SARVAM_STT_MODE", "transcribe")
-        self.default_language_code = os.getenv("SARVAM_LANGUAGE_CODE")
+        self.endpoint = os.getenv("SARVAM_STT_ENDPOINT") or "https://api.sarvam.ai/speech-to-text"
+        self.model = os.getenv("SARVAM_STT_MODEL") or "saaras:v3"
+        self.mode = os.getenv("SARVAM_STT_MODE") or "transcribe"
+        self.default_language_code = os.getenv("SARVAM_LANGUAGE_CODE") or None
         self.temperature = temperature
 
     def transcribe_audio(self, audio_file: str, **kwargs):
@@ -96,7 +96,7 @@ class SarvamTranscription(TranscriptionBase):
         return payload
 
     def _language_code(self, language):
-        language = self.default_language_code or language
+        language = language or self.default_language_code
         if not language:
             return None
 

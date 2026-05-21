@@ -60,7 +60,7 @@ This tool automates the process of transcribing video files using multiple trans
    SARVAM_STT_ENDPOINT=https://api.sarvam.ai/speech-to-text
    SARVAM_STT_MODEL=saaras:v3
    SARVAM_STT_MODE=transcribe
-   SARVAM_LANGUAGE_CODE=unknown
+   SARVAM_LANGUAGE_CODE=
    ```
 
 ## Building and Installing the Package
@@ -131,7 +131,7 @@ Example:
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
 
-Sarvam AI uses BCP-47 language codes for speech-to-text. You can pass common short codes such as `--language hi`, `--language ta`, or `--language en`, and Sapat maps them to Sarvam's `hi-IN`, `ta-IN`, and `en-IN` codes. Use `--language unknown` or set `SARVAM_LANGUAGE_CODE=unknown` for Sarvam language detection.
+Sarvam AI uses BCP-47 language codes for speech-to-text. You can pass common short codes such as `--language hi`, `--language ta`, or `--language en`, and Sapat maps them to Sarvam's `hi-IN`, `ta-IN`, and `en-IN` codes. Use `--language unknown` for Sarvam language detection, or set `SARVAM_LANGUAGE_CODE` when you want one fallback language code for every run.
 
 - If a file is provided, it will process that single file.
 - If a directory is provided, it will process all `.mp4` files in that directory.
