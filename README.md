@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Google Gemini, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Google Gemini, Groq, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -16,6 +16,7 @@ This tool automates the process of transcribing video files using multiple trans
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
+  - Google Gemini Developer API
   - Groq Cloud API
   - OpenAI API
 
@@ -53,6 +54,11 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Google Gemini
+   GEMINI_API_KEY=your_gemini_api_key_here
+   GEMINI_MODEL=gemini-2.0-flash
+   GEMINI_API_ENDPOINT_TEMPLATE=https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent
    ```
 
 ## Building and Installing the Package
@@ -113,6 +119,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
+   - `--api gemini` for Google Gemini Developer API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
 
@@ -129,7 +136,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Google Gemini, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
