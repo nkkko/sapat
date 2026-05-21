@@ -1,9 +1,25 @@
 import click
 from pathlib import Path
-from .transcription.groq import GroqCloudTranscription
-from .transcription.azure import AzureTranscription
-from .transcription.openai import OpenAITranscription
-from .transcription.lemonfox import LemonfoxTranscription
+
+
+def create_transcriber(api: str, temperature: float):
+    if api.lower() == "groq":
+        from .transcription.groq import GroqCloudTranscription
+
+        return GroqCloudTranscription(temperature=temperature)
+    if api.lower() == "azure":
+        from .transcription.azure import AzureTranscription
+
+        return AzureTranscription(temperature=temperature)
+    if api.lower() == "openai":
+        from .transcription.openai import OpenAITranscription
+
+        return OpenAITranscription(temperature=temperature)
+    if api.lower() == "lemonfox":
+        from .transcription.lemonfox import LemonfoxTranscription
+
+        return LemonfoxTranscription(temperature=temperature)
+    raise ValueError(f"Unsupported API: {api}")
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
@@ -19,21 +35,8 @@ def main(input_path, language, prompt, temperature, quality, correct, api):
 
     INPUT_PATH is the path to the video file or directory containing video files.
     """
-    # Initialize the correct transcription object
     input_path = Path(input_path)
-
-    # Handle file processing based on API choice
-    if api.lower() == "groq":
-        transcriber = GroqCloudTranscription(temperature=temperature)
-    elif api.lower() == "azure":
-        transcriber = AzureTranscription(temperature=temperature)
-    elif api.lower() == "openai":
-        transcriber = OpenAITranscription(temperature=temperature)
-    elif api.lower() == "lemonfox":
-        transcriber = LemonfoxTranscription(temperature=temperature)
-    else:
-        click.echo(f"Unsupported API: {api}")
-        return
+    transcriber = create_transcriber(api, temperature)
 
     if input_path.is_file():
         transcriber.process_file(input_path, language, prompt, temperature, quality, correct)

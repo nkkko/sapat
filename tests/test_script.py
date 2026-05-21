@@ -15,11 +15,11 @@ class ScriptTests(unittest.TestCase):
             with open("clip.mp4", "wb") as f:
                 f.write(b"video")
 
-            with patch("sapat.script.LemonfoxTranscription", return_value=transcriber) as constructor:
+            with patch("sapat.script.create_transcriber", return_value=transcriber) as constructor:
                 result = runner.invoke(main, ["clip.mp4", "--api", "lemonfox"])
 
         self.assertEqual(result.exit_code, 0)
-        constructor.assert_called_once_with(temperature=0.3)
+        constructor.assert_called_once_with("lemonfox", 0.3)
         transcriber.process_file.assert_called_once()
 
 
