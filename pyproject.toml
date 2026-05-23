@@ -11,6 +11,11 @@ dependencies = [
     "groq>=0.13.1"
 ]
 
+[project.optional-dependencies]
+leopard = [
+    "pvleopard>=3.0.1; python_version >= '3.9'"
+]
+
 [project.scripts]
 sapat = "sapat.script:main"
 
