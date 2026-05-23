@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and LocalAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and LocalAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - LocalAI server with audio-to-text models installed
 
 ## Installation
 
@@ -53,6 +54,12 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # LocalAI
+   LOCALAI_BASE_URL=http://localhost:8080
+   LOCALAI_MODEL=whisper-1
+   # Optional if your LocalAI server requires authentication:
+   LOCALAI_API_KEY=your_localai_token_here
    ```
 
 ## Building and Installing the Package
@@ -115,6 +122,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api localai` for a LocalAI OpenAI-compatible transcription endpoint
 
 Example:
 
@@ -130,6 +138,7 @@ The script will create a `.txt` file with the same name as the input video file,
 ## Note
 
 This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+LocalAI can run locally without cloud API credentials, but you must have a LocalAI server running and a compatible audio-to-text model installed before using `--api localai`.
 
 ## License
 
