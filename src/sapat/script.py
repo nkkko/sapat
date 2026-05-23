@@ -3,15 +3,16 @@ from pathlib import Path
 from .transcription.groq import GroqCloudTranscription
 from .transcription.azure import AzureTranscription
 from .transcription.openai import OpenAITranscription
+from .transcription.whispercpp import WhisperCppTranscription
 
 @click.command()
 @click.argument("input_path", type=click.Path(exists=True))
 @click.option("--language", "-l", default="en", help="Language of the audio (default: en)")
 @click.option("--prompt", "-p", help="Optional prompt to guide the model")
 @click.option("--temperature", "-t", type=float, default=0.3, help="Sampling temperature (default: 0.3)")
-@click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
+@click.option("--quality", "-q", type=click.Choice(['L', 'M', 'H'], case_sensitive=False), default='M', help="Quality of the converted audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M')")
 @click.option("--correct", is_flag=True, help="Use LLM to correct the transcript")
-@click.option("--api", "-a", type=click.Choice(['openai', 'groq', 'azure'], case_sensitive=True), required=True, help="API to use for the transcription ('openai', 'groq' or 'azure')")
+@click.option("--api", "-a", type=click.Choice(['openai', 'groq', 'azure', 'whispercpp'], case_sensitive=True), required=True, help="API to use for the transcription ('openai', 'groq', 'azure' or 'whispercpp')")
 def main(input_path, language, prompt, temperature, quality, correct, api):
     """
     Transcribe video files using different APIs.
@@ -28,6 +29,8 @@ def main(input_path, language, prompt, temperature, quality, correct, api):
         transcriber = AzureTranscription(temperature=temperature)
     elif api.lower() == "openai":
         transcriber = OpenAITranscription(temperature=temperature)
+    elif api.lower() == "whispercpp":
+        transcriber = WhisperCppTranscription()
     else:
         click.echo(f"Unsupported API: {api}")
         return

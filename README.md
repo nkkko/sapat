@@ -1,13 +1,13 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI APIs, and local whisper.cpp. It converts video files to audio, transcribes them, and saves each transcription as a text file.
 
 ## Features
 
-- Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Converts video files to provider-ready audio using ffmpeg
+- Supports transcription using Azure OpenAI, Groq, OpenAI APIs, and local whisper.cpp
 - Supports processing of individual video files or entire directories
-- Cleans up temporary MP3 files after transcription
+- Cleans up temporary audio files after transcription
 - Provides flexibility in selecting the transcription service via configuration
 
 ## Prerequisites
@@ -18,6 +18,9 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+- Optional local whisper.cpp setup:
+  - A compiled `whisper-cli` binary or full binary path
+  - A local `ggml` Whisper model file
 
 ## Installation
 
@@ -53,6 +56,12 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # whisper.cpp
+   WHISPERCPP_BINARY=whisper-cli
+   WHISPERCPP_MODEL_PATH=/absolute/path/to/ggml-base.en.bin
+   WHISPERCPP_THREADS=4
+   WHISPERCPP_EXTRA_ARGS=
    ```
 
 ## Building and Installing the Package
@@ -115,11 +124,18 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api whispercpp` for local whisper.cpp transcription
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+```
+
+Local whisper.cpp example:
+
+```
+sapat my_video.mp4 --quality M --language en --api whispercpp
 ```
 
 - If a file is provided, it will process that single file.
@@ -129,7 +145,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI) plus a local whisper.cpp option. Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use. For whisper.cpp, ensure `WHISPERCPP_BINARY` and `WHISPERCPP_MODEL_PATH` point to local files available in your workspace.
 
 ## License
 
