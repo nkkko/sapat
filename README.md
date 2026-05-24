@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Baidu Speech Recognition, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Baidu Speech Recognition, Groq, and OpenAI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -16,6 +16,7 @@ This tool automates the process of transcribing video files using multiple trans
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
+  - Baidu Speech Recognition API
   - Groq Cloud API
   - OpenAI API
 
@@ -47,6 +48,12 @@ This tool automates the process of transcribing video files using multiple trans
    GROQCLOUD_MODEL=whisper-large-v3-turbo
    GROQCLOUD_API_ENDPOINT=https://api.groq.com/openai/v1/audio/transcriptions
    GROQCLOUD_MODEL_NAME_CHAT=llama3-8b-8192
+
+   # Baidu Speech Recognition
+   BAIDU_API_KEY=your_baidu_api_key_here
+   BAIDU_SECRET_KEY=your_baidu_secret_key_here
+   BAIDU_DEV_PID=1737
+   BAIDU_SAMPLE_RATE=16000
 
    # OpenAI
    OPENAI_API_KEY=your_openai_api_key_here
@@ -113,6 +120,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
 - `--api`: Specify the API to use for transcription.
    - `--api azure` for Azure OpenAI API
+   - `--api baidu` for Baidu Speech Recognition API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
 
