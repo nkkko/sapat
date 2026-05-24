@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and Amazon Transcribe APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and Amazon Transcribe APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - AWS account with Amazon Transcribe and S3 permissions
 
 ## Installation
 
@@ -53,6 +54,15 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Amazon Transcribe
+   AWS_TRANSCRIBE_REGION=us-east-1
+   AWS_TRANSCRIBE_S3_BUCKET=your-sapat-input-bucket
+   AWS_TRANSCRIBE_S3_PREFIX=sapat/
+   AWS_TRANSCRIBE_LANGUAGE_CODE=en-US
+   # Optional: store transcript JSON in your own bucket instead of the service bucket
+   AWS_TRANSCRIBE_OUTPUT_BUCKET=your-sapat-output-bucket
+   AWS_TRANSCRIBE_OUTPUT_PREFIX=sapat-transcripts/
    ```
 
 ## Building and Installing the Package
@@ -115,11 +125,18 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api aws` for Amazon Transcribe
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+```
+
+Amazon Transcribe example:
+
+```
+sapat my_video.mp4 --quality H --language en-US --api aws
 ```
 
 - If a file is provided, it will process that single file.
