@@ -8,6 +8,7 @@ __pycache__/
 
 # Ignore virtualenv
 venv/
+.venv/
 ENV/
 env.bak/
 env/
