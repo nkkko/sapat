@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI APIs, and Oracle Cloud AI Speech. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI APIs, and Oracle Cloud AI Speech
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Oracle Cloud Infrastructure Object Storage and AI Speech access
 
 ## Installation
 
@@ -53,6 +54,17 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Oracle Cloud AI Speech
+   OCI_CONFIG_FILE=~/.oci/config
+   OCI_PROFILE=DEFAULT
+   OCI_COMPARTMENT_ID=ocid1.compartment.oc1..example
+   OCI_OBJECT_STORAGE_NAMESPACE=your_namespace
+   OCI_SPEECH_INPUT_BUCKET=your_input_bucket
+   OCI_SPEECH_OUTPUT_BUCKET=your_output_bucket
+   OCI_SPEECH_OUTPUT_PREFIX=sapat-transcripts
+   OCI_SPEECH_MODEL_TYPE=ORACLE
+   OCI_SPEECH_LANGUAGE_CODE=en-US
    ```
 
 ## Building and Installing the Package
@@ -115,11 +127,19 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api oracle` for Oracle Cloud AI Speech
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+```
+
+Oracle Cloud AI Speech example:
+
+```
+pip install "sapat[oracle]"
+sapat meeting.mp4 --quality M --language en-US --api oracle
 ```
 
 - If a file is provided, it will process that single file.
