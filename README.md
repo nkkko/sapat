@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and Symbl.ai APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and Symbl.ai APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Symbl.ai API
 
 ## Installation
 
@@ -53,6 +54,15 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Symbl.ai
+   # Use either SYMBL_ACCESS_TOKEN or both SYMBL_APP_ID and SYMBL_APP_SECRET.
+   SYMBL_ACCESS_TOKEN=your_symbl_access_token_here
+   SYMBL_APP_ID=your_symbl_app_id_here
+   SYMBL_APP_SECRET=your_symbl_app_secret_here
+   SYMBL_API_BASE_URL=https://api.symbl.ai/v1
+   SYMBL_JOB_POLL_INTERVAL_SECONDS=5
+   SYMBL_JOB_TIMEOUT_SECONDS=600
    ```
 
 ## Building and Installing the Package
@@ -115,6 +125,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api symbl` for Symbl.ai Async Audio API
 
 Example:
 
@@ -129,7 +140,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, OpenAI, and Symbl.ai). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
