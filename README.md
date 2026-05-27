@@ -5,7 +5,7 @@ This tool automates the process of transcribing video files using multiple trans
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and local Moonshine Voice
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,8 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+- Optional local Moonshine Voice support:
+  - `pip install 'sapat[moonshine]'`
 
 ## Installation
 
@@ -53,6 +55,10 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Moonshine Voice
+   # No API key is required. The moonshine-voice package downloads and caches
+   # the selected local model when you run the provider for the first time.
    ```
 
 ## Building and Installing the Package
@@ -115,12 +121,24 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api moonshine` for local Moonshine Voice transcription
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
+
+Local Moonshine example:
+
+```
+pip install 'sapat[moonshine]'
+sapat my_video.mp4 --language en --api moonshine
+```
+
+Moonshine runs on-device and does not use `--prompt`, `--temperature`, or
+`--correct`. Sapat converts video or audio input to a temporary 16 kHz mono WAV
+file before calling Moonshine.
 
 - If a file is provided, it will process that single file.
 - If a directory is provided, it will process all `.mp4` files in that directory.

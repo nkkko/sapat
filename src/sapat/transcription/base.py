@@ -31,6 +31,26 @@ class TranscriptionBase(ABC):
         command = ['ffmpeg', '-i', input_file, '-vn'] + ffmpeg_options + [output_file]
         subprocess.run(command, check=True)
 
+    @staticmethod
+    def convert_to_wav(input_file: str, output_file: str):
+        """
+        Converts an audio or video file to 16 kHz mono WAV for local ASR engines.
+        """
+        command = [
+            'ffmpeg',
+            '-i',
+            input_file,
+            '-vn',
+            '-ar',
+            '16000',
+            '-ac',
+            '1',
+            '-sample_fmt',
+            's16',
+            output_file,
+        ]
+        subprocess.run(command, check=True)
+
 
     def process_file(self, input_file, language, prompt, temperature, quality, correct):
         input_path = Path(input_file)

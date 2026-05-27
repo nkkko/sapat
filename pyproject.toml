@@ -11,6 +11,11 @@ dependencies = [
     "groq>=0.13.1"
 ]
 
+[project.optional-dependencies]
+moonshine = [
+    "moonshine-voice>=0.0.56"
+]
+
 [project.scripts]
 sapat = "sapat.script:main"
 
