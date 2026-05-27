@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and Yandex SpeechKit APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and Yandex SpeechKit APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Yandex SpeechKit API
 
 ## Installation
 
@@ -53,7 +54,19 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Yandex SpeechKit
+   YANDEX_API_KEY=your_yandex_api_key_here
+   YANDEX_IAM_TOKEN=
+   YANDEX_FOLDER_ID=
+   YANDEX_API_ENDPOINT=https://stt.api.cloud.yandex.net/speech/v1/stt:recognize
+   YANDEX_LANGUAGE=en-US
+   YANDEX_TOPIC=general
+   YANDEX_AUDIO_FORMAT=oggopus
+   YANDEX_SAMPLE_RATE_HERTZ=48000
    ```
+
+   When authenticating to Yandex SpeechKit with an API key, leave `YANDEX_FOLDER_ID` empty. Set `YANDEX_FOLDER_ID` only when you use an IAM token flow that requires the folder ID.
 
 ## Building and Installing the Package
 
@@ -115,12 +128,15 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api yandex` for Yandex SpeechKit API
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
 ```
+
+Yandex SpeechKit synchronous recognition is designed for short, single-channel clips. Sapat converts the temporary MP3 to the OggOpus format required by Yandex before upload. Keep clips within the Yandex synchronous recognition limits, or use a different provider for longer recordings.
 
 - If a file is provided, it will process that single file.
 - If a directory is provided, it will process all `.mp4` files in that directory.
@@ -129,7 +145,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, OpenAI, and Yandex SpeechKit). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
