@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and OpenRouter APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and OpenRouter APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - OpenRouter API
 
 ## Installation
 
@@ -53,6 +54,14 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # OpenRouter
+   OPENROUTER_API_KEY=your_openrouter_api_key_here
+   OPENROUTER_MODEL=openai/whisper-large-v3
+   OPENROUTER_API_ENDPOINT=https://openrouter.ai/api/v1/audio/transcriptions
+   # Optional attribution headers for OpenRouter rankings/analytics
+   OPENROUTER_HTTP_REFERER=https://github.com/nkkko/sapat
+   OPENROUTER_APP_TITLE=Sapat
    ```
 
 ## Building and Installing the Package
@@ -115,6 +124,7 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--api openrouter` for OpenRouter API
 
 Example:
 
