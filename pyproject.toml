@@ -1,19 +1,52 @@
+[build-system]
+requires = ["setuptools>=67", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "sapat"
-version = "0.1.2"
-description = "Video Transcription Tool using different APIs"
-requires-python = ">=3.6"
+dynamic = ["version"]
+description = "Multi-provider speech-to-text transcription CLI tool"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Your Name", email = "your.email@example.com"}
+]
 dependencies = [
-    "click>=8.1.8",
-    "requests>=2.32.3",
-    "python-dotenv>=1.0.1",
-    "openai>=1.58.1",
-    "groq>=0.13.1"
+    "click",
+    "requests",
+    "python-dotenv",
+    "openai",
+    "halo"
 ]
 
 [project.scripts]
-sapat = "sapat.script:main"
+sapat = "sapat.cli:main"
 
-[build-system]
-requires = ["wheel", "setuptools>=61.0"] # Ensure setuptools is recent enough
-build-backend = "setuptools.build_meta"
+[project.optional-dependencies]
+oracle = ["oci>=2.126.0"]
+vosk = ["vosk"]
+moonshine = ["moonshine-voice"]
+whisperx = ["whisperx"]
+picovoice = ["pvleopard"]
+replicate = ["replicate"]
+falai = ["fal-client"]
+all = [
+    "sapat[oracle]",
+    "sapat[vosk]",
+    "sapat[moonshine]",
+    "sapat[whisperx]",
+    "sapat[picovoice]",
+    "sapat[replicate]",
+    "sapat[falai]",
+]
+dev = ["pytest", "pytest-mock", "black", "isort"]
+
+[tool.setuptools.packages.find]
+include = ["sapat"]
+
+[tool.setuptools.dynamic]
+version = {attr = "sapat.__version__.__version__"}
+
+[project.urls]
+Homepage = "https://github.com/nibzard/sapat"
