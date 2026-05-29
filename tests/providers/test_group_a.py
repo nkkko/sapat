@@ -1,4 +1,4 @@
-# ABOUTME: Mock-based tests for all 8 transcription providers in group A
+# ABOUTME: Mock-based tests for transcription providers in group A
 # ABOUTME: Tests verify each provider sends correct auth, URL, and payload
 
 import os
@@ -8,7 +8,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from sapat.providers.base import TranscriptionResult
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -56,7 +55,10 @@ class TestDeepInfraProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -105,7 +107,10 @@ class TestVeniceProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.venice.ai/api/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.venice.ai/api/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -143,7 +148,10 @@ class TestTogetherProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.together.xyz/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.together.xyz/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -219,7 +227,10 @@ class TestMistralProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.mistral.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "voxtral-mini-latest"
         # Mistral uses context_bias instead of prompt
         assert "prompt" not in kwargs["data"]
@@ -233,7 +244,9 @@ class TestMistralProvider:
         from sapat.providers.mistral import MistralProvider
 
         provider = MistralProvider()
-        provider.transcribe(audio_file, model="voxtral-mini-latest", prompt="Product: Sapat")
+        provider.transcribe(
+            audio_file, model="voxtral-mini-latest", prompt="Product: Sapat"
+        )
 
         _, kwargs = mock_post.call_args
         assert kwargs["data"]["context_bias"] == "Product: Sapat"
@@ -241,9 +254,9 @@ class TestMistralProvider:
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.mistral.requests.post")
     def test_correct_transcript_uses_chat_endpoint(self, mock_post):
-        chat_response = FakeResponse(payload={
-            "choices": [{"message": {"content": "corrected text"}}]
-        })
+        chat_response = FakeResponse(
+            payload={"choices": [{"message": {"content": "corrected text"}}]}
+        )
         mock_post.return_value = chat_response
 
         from sapat.providers.mistral import MistralProvider
@@ -253,7 +266,9 @@ class TestMistralProvider:
 
         assert result == "corrected text"
         _, kwargs = mock_post.call_args
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        assert (
+            mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        )
         assert kwargs["json"]["messages"][1]["content"] == "raw text"
 
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
@@ -296,7 +311,10 @@ class TestLemonfoxProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -339,7 +357,10 @@ class TestLocalAIProvider:
         _, kwargs = mock_post.call_args
         # No auth header when LOCALAI_API_KEY is not set
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "http://localhost:8080/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "http://localhost:8080/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -404,7 +425,9 @@ class TestElevenLabsProvider:
         assert "xi-api-key" in kwargs["headers"]
         assert kwargs["headers"]["xi-api-key"] == "test-key"
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        assert (
+            mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        )
         # ElevenLabs uses model_id, not model
         assert kwargs["data"]["model_id"] == "scribe_v2"
         assert "file" in kwargs["files"]
@@ -445,3 +468,102 @@ class TestElevenLabsProvider:
         provider = ElevenLabsProvider()
         with pytest.raises(RuntimeError, match="401"):
             provider.transcribe(audio_file, model="scribe_v2")
+
+
+# ===========================================================================
+# 9. Deepgram
+# ===========================================================================
+
+
+class TestDeepgramProvider:
+    @patch.dict(os.environ, {"DEEPGRAM_API_KEY": "test-key"}, clear=True)
+    def test_is_available(self):
+        from sapat.providers.deepgram import DeepgramProvider
+
+        assert DeepgramProvider.is_available() is True
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_is_not_available_without_key(self):
+        from sapat.providers.deepgram import DeepgramProvider
+
+        assert DeepgramProvider.is_available() is False
+
+    @patch.dict(os.environ, {"DEEPGRAM_API_KEY": "test-key"}, clear=True)
+    def test_resolve_model_aliases(self):
+        from sapat.providers.deepgram import DeepgramProvider
+
+        provider = DeepgramProvider()
+        assert provider.resolve_model("default") == "nova-3"
+        assert provider.resolve_model("nova") == "nova-3"
+        assert provider.resolve_model("custom-model") == "custom-model"
+
+    @patch.dict(
+        os.environ,
+        {
+            "DEEPGRAM_API_KEY": "test-key",
+            "DEEPGRAM_API_ENDPOINT": "https://example.test/v1/listen",
+            "DEEPGRAM_DIARIZE": "true",
+            "DEEPGRAM_PUNCTUATE": "1",
+        },
+        clear=True,
+    )
+    @patch("sapat.providers.deepgram.requests.post")
+    def test_transcribe_posts_binary_audio_to_listen_endpoint(
+        self, mock_post, audio_file
+    ):
+        mock_post.return_value = FakeResponse(
+            payload={
+                "results": {
+                    "channels": [
+                        {"alternatives": [{"transcript": "hello from deepgram"}]}
+                    ]
+                }
+            }
+        )
+
+        from sapat.providers.deepgram import DeepgramProvider
+
+        provider = DeepgramProvider()
+        result = provider.transcribe(
+            audio_file,
+            model="nova-3",
+            language="en",
+            prompt="Sapat, Daytona",
+        )
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "hello from deepgram"
+
+        call_args = mock_post.call_args
+        assert call_args.args[0] == "https://example.test/v1/listen"
+        kwargs = call_args.kwargs
+        assert kwargs["headers"]["Authorization"] == "Token test-key"
+        assert kwargs["headers"]["Content-Type"] == "audio/mpeg"
+        assert kwargs["params"] == {
+            "model": "nova-3",
+            "language": "en",
+            "smart_format": "true",
+            "diarize": "true",
+            "punctuate": "true",
+            "keywords": "Sapat, Daytona",
+        }
+        assert kwargs["data"] == b"fake audio data"
+
+    @patch.dict(os.environ, {"DEEPGRAM_API_KEY": "test-key"}, clear=True)
+    @patch("sapat.providers.deepgram.requests.post")
+    def test_transcribe_error_raises(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(
+            status_code=401,
+            text="bad token",
+        )
+
+        from sapat.providers.deepgram import DeepgramProvider
+
+        provider = DeepgramProvider()
+        with pytest.raises(RuntimeError, match="Deepgram transcription failed"):
+            provider.transcribe(audio_file, model="nova-3")
+
+    def test_extract_transcript_returns_empty_for_unexpected_payload(self):
+        from sapat.providers.deepgram import DeepgramProvider
+
+        assert DeepgramProvider._extract_transcript({}) == ""
