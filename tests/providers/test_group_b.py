@@ -54,7 +54,9 @@ class TestSymblProvider:
     )
     @patch("sapat.providers.symbl.requests.get")
     @patch("sapat.providers.symbl.requests.post")
-    def test_transcribe_submits_polls_and_fetches(self, mock_post, mock_get, audio_file):
+    def test_transcribe_submits_polls_and_fetches(
+        self, mock_post, mock_get, audio_file
+    ):
         # _upload: POST to /process/audio
         mock_post.return_value = FakeResponse(
             status_code=201,
@@ -86,7 +88,10 @@ class TestSymblProvider:
         assert result.text == "First sentence.\nSecond sentence."
         mock_post.assert_called_once()
         assert "Authorization" in mock_post.call_args.kwargs["headers"]
-        assert mock_post.call_args.kwargs["headers"]["Authorization"] == "Bearer test-token"
+        assert (
+            mock_post.call_args.kwargs["headers"]["Authorization"]
+            == "Bearer test-token"
+        )
 
     @patch.dict(
         os.environ,
@@ -164,7 +169,130 @@ class TestSymblProvider:
 
 
 # ===========================================================================
-# 2. Gladia
+# 2. AssemblyAI
+# ===========================================================================
+
+
+class TestAssemblyAIProvider:
+    @patch.dict(
+        os.environ,
+        {
+            "ASSEMBLYAI_API_KEY": "test-key",
+            "ASSEMBLYAI_BASE_URL": "https://assembly.test",
+            "ASSEMBLYAI_SPEAKER_LABELS": "true",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.assemblyai.requests.get")
+    @patch("sapat.providers.assemblyai.requests.post")
+    def test_transcribe_uploads_submits_polls_and_fetches(
+        self, mock_post, mock_get, audio_file
+    ):
+        mock_post.side_effect = [
+            FakeResponse(
+                status_code=200,
+                payload={"upload_url": "https://cdn.assembly.test/audio.mp3"},
+            ),
+            FakeResponse(status_code=200, payload={"id": "transcript-123"}),
+        ]
+        mock_get.side_effect = [
+            FakeResponse(status_code=200, payload={"status": "queued"}),
+            FakeResponse(status_code=200, payload={"status": "completed"}),
+            FakeResponse(
+                status_code=200,
+                payload={
+                    "status": "completed",
+                    "text": "Hello from AssemblyAI.",
+                    "language_code": "en",
+                    "audio_duration": 12.5,
+                    "utterances": [{"speaker": "A", "text": "Hello from AssemblyAI."}],
+                },
+            ),
+        ]
+
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        provider = AssemblyAIProvider()
+        provider.poll_interval = 0.01
+        result = provider.transcribe(
+            audio_file,
+            model="universal-3-pro, universal-2",
+            language="en",
+            prompt="Product names: Sapat",
+        )
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "Hello from AssemblyAI."
+        assert result.language == "en"
+        assert result.duration == 12.5
+
+        upload_call, transcript_call = mock_post.call_args_list
+        assert upload_call.args[0] == "https://assembly.test/v2/upload"
+        assert upload_call.kwargs["headers"]["Authorization"] == "test-key"
+        assert (
+            upload_call.kwargs["headers"]["Content-Type"] == "application/octet-stream"
+        )
+
+        assert transcript_call.args[0] == "https://assembly.test/v2/transcript"
+        payload = transcript_call.kwargs["json"]
+        assert payload["audio_url"] == "https://cdn.assembly.test/audio.mp3"
+        assert payload["speech_models"] == ["universal-3-pro", "universal-2"]
+        assert payload["language_code"] == "en"
+        assert payload["prompt"] == "Product names: Sapat"
+        assert payload["speaker_labels"] is True
+
+    @patch.dict(os.environ, {"ASSEMBLYAI_API_KEY": "test-key"}, clear=False)
+    def test_default_model(self):
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        assert AssemblyAIProvider.config.default_model == "universal-3-pro,universal-2"
+
+    @patch.dict(os.environ, {"ASSEMBLYAI_API_KEY": "test-key"}, clear=False)
+    def test_available_with_key(self):
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        assert AssemblyAIProvider.is_available() is True
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_not_available_without_key(self):
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        assert AssemblyAIProvider.is_available() is False
+
+    @patch.dict(os.environ, {"ASSEMBLYAI_API_KEY": "test-key"}, clear=False)
+    @patch("sapat.providers.assemblyai.requests.get")
+    @patch("sapat.providers.assemblyai.requests.post")
+    def test_failed_transcript_raises(self, mock_post, mock_get, audio_file):
+        mock_post.side_effect = [
+            FakeResponse(status_code=200, payload={"upload_url": "https://cdn/a.mp3"}),
+            FakeResponse(status_code=200, payload={"id": "transcript-123"}),
+        ]
+        mock_get.return_value = FakeResponse(
+            status_code=200,
+            payload={"status": "error", "error": "bad audio"},
+        )
+
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        provider = AssemblyAIProvider()
+        provider.poll_interval = 0.01
+        with pytest.raises(RuntimeError, match="failed"):
+            provider.transcribe(audio_file, model="universal-3-pro")
+
+    @patch.dict(os.environ, {"ASSEMBLYAI_API_KEY": "test-key"}, clear=False)
+    @patch("sapat.providers.assemblyai.requests.post")
+    def test_upload_response_must_include_url(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(status_code=200, payload={})
+
+        from sapat.providers.assemblyai import AssemblyAIProvider
+
+        provider = AssemblyAIProvider()
+        with pytest.raises(RuntimeError, match="upload_url"):
+            provider.transcribe(audio_file, model="universal-3-pro")
+
+
+# ===========================================================================
+# 3. Gladia
 # ===========================================================================
 
 
@@ -172,7 +300,9 @@ class TestGladiaProvider:
     @patch.dict(os.environ, {"GLADIA_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.gladia.requests.get")
     @patch("sapat.providers.gladia.requests.post")
-    def test_transcribe_uploads_creates_job_and_polls(self, mock_post, mock_get, audio_file):
+    def test_transcribe_uploads_creates_job_and_polls(
+        self, mock_post, mock_get, audio_file
+    ):
         # Step 1: upload audio -> audio_url
         # Step 2: create transcription job -> result_url
         upload_response = FakeResponse(
@@ -263,7 +393,9 @@ class TestSpeechmaticsProvider:
     @patch.dict(os.environ, {"SPEECHMATICS_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.speechmatics.requests.get")
     @patch("sapat.providers.speechmatics.requests.post")
-    def test_transcribe_creates_job_and_fetches_text(self, mock_post, mock_get, audio_file):
+    def test_transcribe_creates_job_and_fetches_text(
+        self, mock_post, mock_get, audio_file
+    ):
         create_response = FakeResponse(status_code=201, payload={"id": "job-123"})
         mock_post.return_value = create_response
 
@@ -311,7 +443,9 @@ class TestSpeechmaticsProvider:
     @patch("sapat.providers.speechmatics.requests.get")
     @patch("sapat.providers.speechmatics.requests.post")
     def test_rejected_job_raises(self, mock_post, mock_get, audio_file):
-        mock_post.return_value = FakeResponse(status_code=201, payload={"id": "job-123"})
+        mock_post.return_value = FakeResponse(
+            status_code=201, payload={"id": "job-123"}
+        )
         mock_get.return_value = FakeResponse(
             status_code=200, payload={"job": {"status": "rejected"}}
         )
@@ -346,6 +480,7 @@ class TestYandexProvider:
         # Simulate ffmpeg creating the output file
         def fake_run(cmd, **kwargs):
             Path(cmd[-1]).write_bytes(b"fake oggopus")
+
         mock_run.side_effect = fake_run
 
         mock_post.return_value = FakeResponse(
@@ -382,6 +517,7 @@ class TestYandexProvider:
     def test_iam_token_auth_with_folder_id(self, mock_run, mock_post, audio_file):
         def fake_run(cmd, **kwargs):
             Path(cmd[-1]).write_bytes(b"fake oggopus")
+
         mock_run.side_effect = fake_run
 
         mock_post.return_value = FakeResponse(
@@ -432,9 +568,11 @@ class TestYandexProvider:
 
 def _fake_oci(object_client, speech_client):
     """Build a fake oci module for testing Oracle provider."""
+
     def record_factory(name):
         def factory(**kwargs):
             return types.SimpleNamespace(_model_name=name, **kwargs)
+
         return factory
 
     models = types.SimpleNamespace(
@@ -472,13 +610,13 @@ class TestOracleProvider:
     def test_transcribe_uploads_polls_and_reads_output(self, audio_file):
         object_client = Mock()
         speech_client = Mock()
-        speech_client.create_transcription_job.return_value.data = types.SimpleNamespace(
-            id="job1"
+        speech_client.create_transcription_job.return_value.data = (
+            types.SimpleNamespace(id="job1")
         )
-        speech_client.list_transcription_tasks.return_value.data = types.SimpleNamespace(
-            items=[
-                types.SimpleNamespace(id="task1", lifecycle_state="SUCCEEDED")
-            ]
+        speech_client.list_transcription_tasks.return_value.data = (
+            types.SimpleNamespace(
+                items=[types.SimpleNamespace(id="task1", lifecycle_state="SUCCEEDED")]
+            )
         )
         speech_client.get_transcription_task.return_value.data = types.SimpleNamespace(
             output_location=types.SimpleNamespace(
@@ -547,7 +685,9 @@ class TestOracleProvider:
     def test_extract_text_from_json(self):
         from sapat.providers.oracle import OracleProvider
 
-        raw = json.dumps({"transcriptions": [{"transcription": "hello"}, {"transcription": "world"}]})
+        raw = json.dumps(
+            {"transcriptions": [{"transcription": "hello"}, {"transcription": "world"}]}
+        )
         assert OracleProvider._extract_text(raw) == "hello\nworld"
 
     def test_extract_text_from_plain_text(self):
@@ -599,7 +739,9 @@ class TestReplicateProvider:
     )
     def test_translate_flag_passed_through(self, audio_file):
         mock_replicate = MagicMock()
-        mock_replicate.Client.return_value.run.return_value = {"text": "translated text"}
+        mock_replicate.Client.return_value.run.return_value = {
+            "text": "translated text"
+        }
 
         from sapat.providers.replicate import ReplicateProvider
 

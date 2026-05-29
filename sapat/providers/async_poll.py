@@ -45,7 +45,12 @@ class AsyncPollProvider(TranscriptionProvider):
         temperature: float = 0,
         **kwargs,
     ) -> TranscriptionResult:
-        job_id = self._upload(audio_file, model, language, **kwargs)
+        upload_kwargs = dict(kwargs)
+        if prompt:
+            upload_kwargs["prompt"] = prompt
+        upload_kwargs["temperature"] = temperature
+
+        job_id = self._upload(audio_file, model, language, **upload_kwargs)
 
         elapsed = 0.0
         while elapsed < self.max_poll_time:
@@ -57,4 +62,6 @@ class AsyncPollProvider(TranscriptionProvider):
             time.sleep(self.poll_interval)
             elapsed += self.poll_interval
 
-        raise TimeoutError(f"{self.name} job {job_id} timed out after {self.max_poll_time}s")
+        raise TimeoutError(
+            f"{self.name} job {job_id} timed out after {self.max_poll_time}s"
+        )
