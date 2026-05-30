@@ -1,6 +1,7 @@
 # ABOUTME: Tests for the Rev AI asynchronous transcription provider
 # ABOUTME: Verifies upload, polling, transcript fetch, and availability behavior
 
+import json
 import os
 from unittest.mock import patch
 
@@ -66,8 +67,9 @@ class TestRevAIProvider:
         post_kwargs = mock_post.call_args.kwargs
         assert post_url == "https://revai.test/speechtotext/v1/jobs"
         assert post_kwargs["headers"]["Authorization"] == "Bearer test-token"
-        assert post_kwargs["data"]["language"] == "en"
+        assert json.loads(post_kwargs["data"]["options"]) == {"language": "en"}
         assert "media" in post_kwargs["files"]
+        assert post_kwargs["files"]["media"][2] == "audio/mpeg"
 
         assert mock_get.call_args_list[0].args[0].endswith("/jobs/job-123")
         assert (
@@ -81,6 +83,25 @@ class TestRevAIProvider:
         from sapat.providers.revai import RevAIProvider
 
         assert RevAIProvider.config.default_model == "async"
+
+    @patch.dict(os.environ, {"REVAI_ACCESS_TOKEN": "test-token"}, clear=False)
+    def test_job_options_omit_auto_language_and_default_model(self):
+        from sapat.providers.revai import RevAIProvider
+
+        provider = RevAIProvider()
+
+        assert provider._job_options("async", "auto") == {}
+
+    @patch.dict(os.environ, {"REVAI_ACCESS_TOKEN": "test-token"}, clear=False)
+    def test_job_options_map_model_to_transcriber(self):
+        from sapat.providers.revai import RevAIProvider
+
+        provider = RevAIProvider()
+
+        assert provider._job_options("fusion", "en-gb") == {
+            "language": "en-gb",
+            "transcriber": "fusion",
+        }
 
     @patch.dict(os.environ, {"REVAI_ACCESS_TOKEN": "test-token"}, clear=False)
     def test_available_with_access_token(self):

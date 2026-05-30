@@ -1,6 +1,8 @@
 # ABOUTME: Rev AI asynchronous transcription provider
 # ABOUTME: Submits local audio, polls job status, and fetches plain-text transcripts
 
+import json
+import mimetypes
 import os
 
 import requests
@@ -43,17 +45,25 @@ class RevAIProvider(AsyncPollProvider):
             "Accept": accept,
         }
 
-    def _upload(self, audio_file: str, model: str, language: str, **kwargs) -> str:
-        data = {}
+    def _job_options(self, model: str, language: str) -> dict:
+        options = {}
         if language and language.lower() != "auto":
-            data["language"] = language
+            options["language"] = language
+        if model and model != self.config.default_model:
+            options["transcriber"] = model
+        return options
+
+    def _upload(self, audio_file: str, model: str, language: str, **kwargs) -> str:
+        options = self._job_options(model, language)
+        data = {"options": json.dumps(options)} if options else {}
+        media_type = mimetypes.guess_type(audio_file)[0] or "application/octet-stream"
 
         with open(audio_file, "rb") as f:
             response = requests.post(
                 f"{self.base_url}/jobs",
                 headers=self._headers(),
                 data=data,
-                files={"media": (os.path.basename(audio_file), f)},
+                files={"media": (os.path.basename(audio_file), f, media_type)},
                 timeout=120,
             )
 

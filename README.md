@@ -110,15 +110,16 @@ This tool automates the process of transcribing video files using multiple trans
 Run the script with a video file or directory as an argument:
 
 ```
-sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--temperature <temperature>]
+sapat <video_file_or_directory> [--language <language>] [--transcription-prompt <prompt>] [--temperature <temperature>]
 ```
 
 ### Options
 
 - `--language`: Specify the language of the audio (default: "en").
-- `--prompt`: Optional prompt to guide the model's transcription.
+- `--transcription-prompt`: Optional prompt to guide the model's transcription.
 - `--temperature`: The sampling temperature, between 0 and 1 (default: 0).
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
+- `--model`: Provider-specific model or mode. For Rev AI, use `fusion`, `low_cost`, `machine`, or `human` to set Rev AI's transcriber option; omit it for the default machine transcription path.
 - `--provider`: Specify the provider to use for transcription.
    - `--provider azure` for Azure OpenAI API
    - `--provider groq` for Groq Cloud API
