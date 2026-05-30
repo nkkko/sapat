@@ -1,11 +1,11 @@
 # Video Transcription Tool
 
-This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, and OpenAI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
+This tool automates the process of transcribing video files using multiple transcription services: Azure OpenAI, Groq, OpenAI, and Rev AI APIs. It converts video files to MP3 format, transcribes the audio, and saves the transcription as a text file.
 
 ## Features
 
 - Converts video files to MP3 format using ffmpeg
-- Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports transcription using Azure OpenAI, Groq, OpenAI, and Rev AI APIs
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +18,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Rev AI API
 
 ## Installation
 
@@ -53,6 +54,13 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # Rev AI
+   REVAI_ACCESS_TOKEN=your_rev_ai_access_token_here
+   # Optional overrides:
+   # REVAI_API_BASE_URL=https://api.rev.ai/speechtotext/v1
+   # REVAI_JOB_POLL_INTERVAL_SECONDS=5
+   # REVAI_JOB_TIMEOUT_SECONDS=3600
    ```
 
 ## Building and Installing the Package
@@ -102,24 +110,26 @@ This tool automates the process of transcribing video files using multiple trans
 Run the script with a video file or directory as an argument:
 
 ```
-sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--temperature <temperature>]
+sapat <video_file_or_directory> [--language <language>] [--transcription-prompt <prompt>] [--temperature <temperature>]
 ```
 
 ### Options
 
 - `--language`: Specify the language of the audio (default: "en").
-- `--prompt`: Optional prompt to guide the model's transcription.
+- `--transcription-prompt`: Optional prompt to guide the model's transcription.
 - `--temperature`: The sampling temperature, between 0 and 1 (default: 0).
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
-- `--api`: Specify the API to use for transcription.
-   - `--api azure` for Azure OpenAI API
-   - `--api groq` for Groq Cloud API
-   - `--api openai` for OpenAI API
+- `--model`: Provider-specific model or mode. For Rev AI, use `fusion`, `low_cost`, `machine`, or `human` to set Rev AI's transcriber option; omit it for the default machine transcription path.
+- `--provider`: Specify the provider to use for transcription.
+   - `--provider azure` for Azure OpenAI API
+   - `--provider groq` for Groq Cloud API
+   - `--provider openai` for OpenAI API
+   - `--provider revai` for Rev AI API
 
 Example:
 
 ```
-sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+sapat my_video.mp4 --quality H --language es --transcription-prompt "This is a test prompt" --temperature 0.5 --provider revai
 ```
 
 - If a file is provided, it will process that single file.
@@ -129,7 +139,7 @@ The script will create a `.txt` file with the same name as the input video file,
 
 ## Note
 
-This tool is designed for use with multiple APIs (Azure OpenAI, Groq, and OpenAI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
+This tool is designed for use with multiple APIs (Azure OpenAI, Groq, OpenAI, and Rev AI). Ensure you have valid API credentials configured in the `.env` file and the necessary permissions and credits for the API service you plan to use.
 
 ## License
 
