@@ -24,7 +24,9 @@ class FakeProvider(TranscriptionProvider):
     name = "fake_test"
     config = ProviderConfig(required_env_vars=[])
 
-    def transcribe(self, audio_file, model, language="en", prompt=None, temperature=0, **kwargs):
+    def transcribe(
+        self, audio_file, model, language="en", prompt=None, temperature=0, **kwargs
+    ):
         return TranscriptionResult(text="fake")
 
 
@@ -32,6 +34,7 @@ class FakeProvider(TranscriptionProvider):
 def reset_registry():
     """Reset the registry before each test."""
     import sapat.providers as reg
+
     reg._registry.clear()
     reg._discovered = False
     yield
@@ -92,20 +95,32 @@ class TestGetProviderChoices:
 
 class TestAutoDiscovery:
     def test_discovers_azure_when_env_set(self):
-        with patch.dict(os.environ, {
-            "AZURE_OPENAI_API_KEY": "test",
-            "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
-            "AZURE_OPENAI_STT_API_VERSION": "2024-02-01",
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "AZURE_OPENAI_API_KEY": "test",
+                "AZURE_OPENAI_ENDPOINT": "https://test.openai.azure.com",
+                "AZURE_OPENAI_STT_API_VERSION": "2024-02-01",
+            },
+        ):
             from sapat.providers.azure import AzureProvider
+
             register(AzureProvider)
             assert "azure" in _registry
 
     def test_discovers_groq_when_env_set(self):
         with patch.dict(os.environ, {"GROQ_API_KEY": "test"}):
             from sapat.providers.groq import GroqProvider
+
             register(GroqProvider)
             assert "groq" in _registry
+
+    def test_discovers_witai_when_env_set(self):
+        with patch.dict(os.environ, {"WITAI_ACCESS_TOKEN": "test"}):
+            from sapat.providers.witai import WitAIProvider
+
+            register(WitAIProvider)
+            assert "witai" in _registry
 
     def test_no_discovery_without_env(self):
         with patch.dict(os.environ, {}, clear=True):
