@@ -1,4 +1,4 @@
-# ABOUTME: Mock-based tests for all 8 transcription providers in group A
+# ABOUTME: Mock-based tests for transcription providers in group A
 # ABOUTME: Tests verify each provider sends correct auth, URL, and payload
 
 import os
@@ -36,6 +36,117 @@ class FakeResponse:
 
 
 # ===========================================================================
+# OpenAI
+# ===========================================================================
+
+
+class TestOpenAIProvider:
+    @patch.dict(
+        os.environ,
+        {
+            "OPENAI_API_KEY": "test-key",
+            "OPENAI_TRANSCRIPTION_ENDPOINT": "https://example.test/v1/audio/transcriptions",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.openai.requests.post")
+    def test_transcribe_sends_correct_request(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(payload={"text": "hello openai"})
+
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        result = provider.transcribe(
+            audio_file,
+            model="gpt4o",
+            language="en",
+            prompt="Product names include SAPAT.",
+            temperature=0,
+        )
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "hello openai"
+
+        _, kwargs = mock_post.call_args
+        assert (
+            mock_post.call_args.args[0]
+            == "https://example.test/v1/audio/transcriptions"
+        )
+        assert kwargs["headers"]["Authorization"] == "Bearer test-key"
+        assert kwargs["data"]["model"] == "gpt-4o-transcribe"
+        assert kwargs["data"]["language"] == "en"
+        assert kwargs["data"]["prompt"] == "Product names include SAPAT."
+        assert kwargs["data"]["response_format"] == "json"
+        assert "file" in kwargs["files"]
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=False)
+    @patch("sapat.providers.openai.requests.post")
+    def test_diarization_defaults_to_speaker_segments(self, mock_post, audio_file):
+        segments = [{"speaker": "speaker_0", "text": "hello", "start": 0, "end": 1}]
+        mock_post.return_value = FakeResponse(
+            payload={"text": "hello", "segments": segments, "duration": 1.0}
+        )
+
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        result = provider.transcribe(audio_file, model="diarize")
+
+        _, kwargs = mock_post.call_args
+        assert kwargs["data"]["model"] == "gpt-4o-transcribe-diarize"
+        assert kwargs["data"]["response_format"] == "diarized_json"
+        assert kwargs["data"]["chunking_strategy"] == "auto"
+        assert result.segments == segments
+        assert result.raw_response["duration"] == 1.0
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=False)
+    def test_resolve_model_aliases(self):
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        assert provider.resolve_model("whisper") == "whisper-1"
+        assert provider.resolve_model("mini") == "gpt-4o-mini-transcribe"
+        assert provider.resolve_model("diarization") == "gpt-4o-transcribe-diarize"
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_not_available_without_key(self):
+        from sapat.providers.openai import OpenAIProvider
+
+        assert OpenAIProvider.is_available() is False
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "bad-key"}, clear=False)
+    @patch("sapat.providers.openai.requests.post")
+    def test_raises_on_api_error(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(status_code=401, text="unauthorized")
+
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        with pytest.raises(RuntimeError, match="401"):
+            provider.transcribe(audio_file, model="gpt-4o-transcribe")
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=False)
+    def test_diarization_rejects_prompt(self, audio_file):
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        with pytest.raises(ValueError, match="do not support prompts"):
+            provider.transcribe(audio_file, model="diarize", prompt="Prefer names")
+
+    @patch.dict(os.environ, {"OPENAI_API_KEY": "test-key"}, clear=False)
+    def test_diarization_rejects_unsupported_options(self, audio_file):
+        from sapat.providers.openai import OpenAIProvider
+
+        provider = OpenAIProvider()
+        with pytest.raises(ValueError, match="timestamp_granularities"):
+            provider.transcribe(
+                audio_file,
+                model="diarize",
+                timestamp_granularities=["word"],
+            )
+
+
+# ===========================================================================
 # 1. DeepInfra
 # ===========================================================================
 
@@ -56,7 +167,10 @@ class TestDeepInfraProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -105,7 +219,10 @@ class TestVeniceProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.venice.ai/api/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.venice.ai/api/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -143,7 +260,10 @@ class TestTogetherProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.together.xyz/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.together.xyz/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -219,7 +339,10 @@ class TestMistralProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.mistral.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "voxtral-mini-latest"
         # Mistral uses context_bias instead of prompt
         assert "prompt" not in kwargs["data"]
@@ -233,7 +356,9 @@ class TestMistralProvider:
         from sapat.providers.mistral import MistralProvider
 
         provider = MistralProvider()
-        provider.transcribe(audio_file, model="voxtral-mini-latest", prompt="Product: Sapat")
+        provider.transcribe(
+            audio_file, model="voxtral-mini-latest", prompt="Product: Sapat"
+        )
 
         _, kwargs = mock_post.call_args
         assert kwargs["data"]["context_bias"] == "Product: Sapat"
@@ -241,9 +366,9 @@ class TestMistralProvider:
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.mistral.requests.post")
     def test_correct_transcript_uses_chat_endpoint(self, mock_post):
-        chat_response = FakeResponse(payload={
-            "choices": [{"message": {"content": "corrected text"}}]
-        })
+        chat_response = FakeResponse(
+            payload={"choices": [{"message": {"content": "corrected text"}}]}
+        )
         mock_post.return_value = chat_response
 
         from sapat.providers.mistral import MistralProvider
@@ -253,7 +378,9 @@ class TestMistralProvider:
 
         assert result == "corrected text"
         _, kwargs = mock_post.call_args
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        assert (
+            mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        )
         assert kwargs["json"]["messages"][1]["content"] == "raw text"
 
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
@@ -296,7 +423,10 @@ class TestLemonfoxProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -339,7 +469,10 @@ class TestLocalAIProvider:
         _, kwargs = mock_post.call_args
         # No auth header when LOCALAI_API_KEY is not set
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "http://localhost:8080/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "http://localhost:8080/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -404,7 +537,9 @@ class TestElevenLabsProvider:
         assert "xi-api-key" in kwargs["headers"]
         assert kwargs["headers"]["xi-api-key"] == "test-key"
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        assert (
+            mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        )
         # ElevenLabs uses model_id, not model
         assert kwargs["data"]["model_id"] == "scribe_v2"
         assert "file" in kwargs["files"]
