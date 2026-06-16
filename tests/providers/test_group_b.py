@@ -325,7 +325,128 @@ class TestSpeechmaticsProvider:
 
 
 # ===========================================================================
-# 4. Yandex SpeechKit
+# 4. CAMB.AI
+# ===========================================================================
+
+
+class TestCambAIProvider:
+    @patch.dict(
+        os.environ,
+        {
+            "CAMB_API_KEY": "test-key",
+            "CAMB_API_BASE_URL": "https://client.camb.test/apis",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.cambai.requests.get")
+    @patch("sapat.providers.cambai.requests.post")
+    def test_transcribe_uploads_polls_and_fetches_segments(
+        self, mock_post, mock_get, audio_file
+    ):
+        mock_post.return_value = FakeResponse(
+            status_code=200,
+            payload={"task_id": "task-123"},
+        )
+        mock_get.side_effect = [
+            FakeResponse(status_code=200, payload={"status": "PENDING"}),
+            FakeResponse(
+                status_code=200,
+                payload={"status": "SUCCESS", "run_id": 456},
+            ),
+            FakeResponse(
+                status_code=200,
+                payload={
+                    "transcript": [
+                        {
+                            "start": 0.0,
+                            "end": 1.4,
+                            "speaker": "Speaker 1",
+                            "text": "First sentence.",
+                        },
+                        {
+                            "start": 1.5,
+                            "end": 3.0,
+                            "speaker": "Speaker 2",
+                            "text": "Second sentence.",
+                        },
+                    ]
+                },
+            ),
+        ]
+
+        from sapat.providers.cambai import CambAIProvider
+
+        provider = CambAIProvider()
+        provider.poll_interval = 0.01
+        result = provider.transcribe(audio_file, model="default", language="en")
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "First sentence.\nSecond sentence."
+        assert result.segments and len(result.segments) == 2
+
+        mock_post.assert_called_once()
+        assert mock_post.call_args.args[0] == "https://client.camb.test/apis/transcribe"
+        assert mock_post.call_args.kwargs["headers"]["x-api-key"] == "test-key"
+        assert mock_post.call_args.kwargs["data"]["language"] == "en-us"
+        assert "media_file" in mock_post.call_args.kwargs["files"]
+
+        assert mock_get.call_args_list[0].args[0] == (
+            "https://client.camb.test/apis/transcribe/task-123"
+        )
+        assert mock_get.call_args_list[-1].args[0] == (
+            "https://client.camb.test/apis/transcription-result/456"
+        )
+
+    @patch.dict(os.environ, {"CAMB_API_KEY": "test-key"}, clear=False)
+    def test_available_with_key(self):
+        from sapat.providers.cambai import CambAIProvider
+
+        assert CambAIProvider.is_available() is True
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_not_available_without_key(self):
+        from sapat.providers.cambai import CambAIProvider
+
+        assert CambAIProvider.is_available() is False
+
+    @patch.dict(os.environ, {"CAMB_API_KEY": "test-key"}, clear=False)
+    def test_default_model(self):
+        from sapat.providers.cambai import CambAIProvider
+
+        assert CambAIProvider.config.default_model == "default"
+
+    @patch.dict(os.environ, {"CAMB_API_KEY": "test-key"}, clear=False)
+    def test_language_aliases(self):
+        from sapat.providers.cambai import CambAIProvider
+
+        provider = CambAIProvider()
+        assert provider._normalize_language("en") == "en-us"
+        assert provider._normalize_language("pt-br") == "pt-br"
+        assert provider._normalize_language(None) == "en-us"
+
+    @patch.dict(os.environ, {"CAMB_API_KEY": "test-key"}, clear=False)
+    @patch("sapat.providers.cambai.requests.get")
+    @patch("sapat.providers.cambai.requests.post")
+    def test_failed_task_raises(self, mock_post, mock_get, audio_file):
+        mock_post.return_value = FakeResponse(
+            status_code=200,
+            payload={"task_id": "task-123"},
+        )
+        mock_get.return_value = FakeResponse(
+            status_code=200,
+            payload={"status": "ERROR"},
+        )
+
+        from sapat.providers.cambai import CambAIProvider
+
+        provider = CambAIProvider()
+        provider.poll_interval = 0.01
+        with pytest.raises(RuntimeError, match="failed"):
+            provider.transcribe(audio_file, model="default", language="en")
+
+
+# ===========================================================================
+# 5. Yandex SpeechKit
 # ===========================================================================
 
 
