@@ -53,6 +53,10 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # IBM Watson Speech to Text
+   IBM_WATSON_STT_API_KEY=your_ibm_watson_stt_api_key_here
+   IBM_WATSON_STT_URL=https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/your-instance-id
    ```
 
 ## Building and Installing the Package
@@ -111,15 +115,17 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
 - `--prompt`: Optional prompt to guide the model's transcription.
 - `--temperature`: The sampling temperature, between 0 and 1 (default: 0).
 - `--quality`: Quality of the MP3 audio: 'L' for low, 'M' for medium, and 'H' for high (default: 'M').
-- `--api`: Specify the API to use for transcription.
-   - `--api azure` for Azure OpenAI API
-   - `--api groq` for Groq Cloud API
-   - `--api openai` for OpenAI API
+- `--provider`: Specify the provider to use for transcription.
+   - `--provider azure` for Azure OpenAI API
+   - `--provider groq` for Groq Cloud API
+   - `--provider openai` for OpenAI API
+   - `--provider ibm_watson` for IBM Watson Speech to Text
+- `--model`: Specify the provider-specific model name.
 
 Example:
 
 ```
-sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --provider groq
 ```
 
 - If a file is provided, it will process that single file.

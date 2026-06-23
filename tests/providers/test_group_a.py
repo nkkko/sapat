@@ -9,7 +9,6 @@ import pytest
 
 from sapat.providers.base import TranscriptionResult
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
@@ -56,7 +55,10 @@ class TestDeepInfraProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -105,7 +107,10 @@ class TestVeniceProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.venice.ai/api/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.venice.ai/api/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -143,7 +148,10 @@ class TestTogetherProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.together.xyz/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.together.xyz/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -219,7 +227,10 @@ class TestMistralProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.mistral.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "voxtral-mini-latest"
         # Mistral uses context_bias instead of prompt
         assert "prompt" not in kwargs["data"]
@@ -233,7 +244,9 @@ class TestMistralProvider:
         from sapat.providers.mistral import MistralProvider
 
         provider = MistralProvider()
-        provider.transcribe(audio_file, model="voxtral-mini-latest", prompt="Product: Sapat")
+        provider.transcribe(
+            audio_file, model="voxtral-mini-latest", prompt="Product: Sapat"
+        )
 
         _, kwargs = mock_post.call_args
         assert kwargs["data"]["context_bias"] == "Product: Sapat"
@@ -241,9 +254,9 @@ class TestMistralProvider:
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.mistral.requests.post")
     def test_correct_transcript_uses_chat_endpoint(self, mock_post):
-        chat_response = FakeResponse(payload={
-            "choices": [{"message": {"content": "corrected text"}}]
-        })
+        chat_response = FakeResponse(
+            payload={"choices": [{"message": {"content": "corrected text"}}]}
+        )
         mock_post.return_value = chat_response
 
         from sapat.providers.mistral import MistralProvider
@@ -253,7 +266,9 @@ class TestMistralProvider:
 
         assert result == "corrected text"
         _, kwargs = mock_post.call_args
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        assert (
+            mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        )
         assert kwargs["json"]["messages"][1]["content"] == "raw text"
 
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
@@ -296,7 +311,10 @@ class TestLemonfoxProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -339,7 +357,10 @@ class TestLocalAIProvider:
         _, kwargs = mock_post.call_args
         # No auth header when LOCALAI_API_KEY is not set
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "http://localhost:8080/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "http://localhost:8080/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -404,7 +425,9 @@ class TestElevenLabsProvider:
         assert "xi-api-key" in kwargs["headers"]
         assert kwargs["headers"]["xi-api-key"] == "test-key"
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        assert (
+            mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        )
         # ElevenLabs uses model_id, not model
         assert kwargs["data"]["model_id"] == "scribe_v2"
         assert "file" in kwargs["files"]
@@ -445,3 +468,107 @@ class TestElevenLabsProvider:
         provider = ElevenLabsProvider()
         with pytest.raises(RuntimeError, match="401"):
             provider.transcribe(audio_file, model="scribe_v2")
+
+
+# ===========================================================================
+# 9. IBM Watson
+# ===========================================================================
+
+
+class TestIBMWatsonProvider:
+    @patch.dict(
+        os.environ,
+        {
+            "IBM_WATSON_STT_API_KEY": "test-key",
+            "IBM_WATSON_STT_URL": "https://api.us-south.speech-to-text.watson.cloud.ibm.com/instances/abc",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.ibm_watson.requests.post")
+    def test_transcribe_sends_correct_request(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(
+            payload={
+                "results": [
+                    {"alternatives": [{"transcript": "hello "}]},
+                    {"alternatives": [{"transcript": "watson"}]},
+                ]
+            }
+        )
+
+        from sapat.providers.ibm_watson import IBMWatsonProvider
+
+        provider = IBMWatsonProvider()
+        result = provider.transcribe(audio_file, model="en")
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "hello watson"
+
+        assert mock_post.call_args.args[0].endswith("/v1/recognize")
+        _, kwargs = mock_post.call_args
+        assert kwargs["auth"] == ("apikey", "test-key")
+        assert kwargs["headers"]["Content-Type"] == "audio/mp3"
+        assert kwargs["params"]["model"] == "en-US_BroadbandModel"
+        assert kwargs["data"] == b"fake audio data"
+
+    @patch.dict(
+        os.environ,
+        {
+            "IBM_WATSON_STT_API_KEY": "test-key",
+            "IBM_WATSON_STT_URL": "https://watson.example",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.ibm_watson.requests.post")
+    def test_allows_content_type_override(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(payload={"results": []})
+
+        from sapat.providers.ibm_watson import IBMWatsonProvider
+
+        provider = IBMWatsonProvider()
+        provider.transcribe(
+            audio_file,
+            model="default",
+            content_type="audio/mpeg",
+        )
+
+        _, kwargs = mock_post.call_args
+        assert kwargs["headers"]["Content-Type"] == "audio/mpeg"
+
+    @patch.dict(
+        os.environ,
+        {
+            "IBM_WATSON_STT_API_KEY": "test-key",
+            "IBM_WATSON_STT_URL": "https://watson.example",
+        },
+        clear=False,
+    )
+    def test_resolve_model_aliases(self):
+        from sapat.providers.ibm_watson import IBMWatsonProvider
+
+        provider = IBMWatsonProvider()
+        assert provider.resolve_model("en-gb") == "en-GB_BroadbandModel"
+        assert provider.resolve_model("custom-model") == "custom-model"
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_not_available_without_env(self):
+        from sapat.providers.ibm_watson import IBMWatsonProvider
+
+        assert IBMWatsonProvider.is_available() is False
+
+    @patch.dict(
+        os.environ,
+        {
+            "IBM_WATSON_STT_API_KEY": "bad-key",
+            "IBM_WATSON_STT_URL": "https://watson.example",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.ibm_watson.requests.post")
+    def test_raises_on_api_error(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(status_code=401, text="unauthorized")
+
+        from sapat.providers.ibm_watson import IBMWatsonProvider
+
+        provider = IBMWatsonProvider()
+        with pytest.raises(RuntimeError, match="401"):
+            provider.transcribe(audio_file, model="default")
