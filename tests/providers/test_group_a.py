@@ -36,6 +36,113 @@ class FakeResponse:
 
 
 # ===========================================================================
+# 0. Hugging Face
+# ===========================================================================
+
+
+class TestHuggingFaceProvider:
+    @patch.dict(os.environ, {"HF_TOKEN": "hf_test"}, clear=False)
+    @patch("sapat.providers.huggingface.requests.post")
+    def test_transcribe_sends_router_request(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(
+            payload={
+                "text": "hello hugging face",
+                "chunks": [{"text": "hello", "timestamp": [0, 1.0]}],
+            }
+        )
+
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        provider = HuggingFaceProvider()
+        result = provider.transcribe(
+            audio_file,
+            model="openai/whisper-large-v3",
+            return_timestamps=True,
+        )
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "hello hugging face"
+        assert result.segments == [{"text": "hello", "timestamp": [0, 1.0]}]
+
+        _, kwargs = mock_post.call_args
+        assert mock_post.call_args.args[0] == (
+            "https://router.huggingface.co/hf-inference/models/openai/whisper-large-v3"
+        )
+        assert kwargs["headers"]["Authorization"] == "Bearer hf_test"
+        assert kwargs["headers"]["Content-Type"] == "application/json"
+        assert kwargs["json"]["inputs"] == "ZmFrZSBhdWRpbyBkYXRh"
+        assert kwargs["json"]["parameters"]["return_timestamps"] is True
+        assert kwargs["timeout"] == 120.0
+
+    @patch.dict(
+        os.environ,
+        {
+            "HF_TOKEN": "hf_test",
+            "HUGGINGFACE_PROVIDER": "fal-ai",
+            "HUGGINGFACE_API_BASE": "https://router.test",
+            "HUGGINGFACE_TIMEOUT": "30",
+        },
+        clear=False,
+    )
+    @patch("sapat.providers.huggingface.requests.post")
+    def test_custom_provider_base_and_temperature(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(payload={"generated_text": "custom text"})
+
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        provider = HuggingFaceProvider()
+        result = provider.transcribe(
+            audio_file,
+            model="openai/whisper-large-v3",
+            temperature=0.2,
+        )
+
+        assert result.text == "custom text"
+        _, kwargs = mock_post.call_args
+        assert mock_post.call_args.args[0] == (
+            "https://router.test/fal-ai/models/openai/whisper-large-v3"
+        )
+        assert (
+            kwargs["json"]["parameters"]["generation_parameters"]["temperature"] == 0.2
+        )
+        assert kwargs["timeout"] == 30.0
+
+    @patch.dict(os.environ, {"HF_TOKEN": "hf_test"}, clear=False)
+    def test_default_model(self):
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        assert HuggingFaceProvider.config.default_model == "openai/whisper-large-v3"
+
+    @patch.dict(os.environ, {}, clear=True)
+    def test_not_available_without_token(self):
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        assert HuggingFaceProvider.is_available() is False
+
+    @patch.dict(os.environ, {"HF_TOKEN": "hf_test"}, clear=False)
+    @patch("sapat.providers.huggingface.requests.post")
+    def test_raises_on_api_error(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(status_code=503, text="model loading")
+
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        provider = HuggingFaceProvider()
+        with pytest.raises(RuntimeError, match="503"):
+            provider.transcribe(audio_file, model="openai/whisper-large-v3")
+
+    @patch.dict(os.environ, {"HF_TOKEN": "hf_test"}, clear=False)
+    @patch("sapat.providers.huggingface.requests.post")
+    def test_raises_when_text_missing(self, mock_post, audio_file):
+        mock_post.return_value = FakeResponse(payload={"chunks": []})
+
+        from sapat.providers.huggingface import HuggingFaceProvider
+
+        provider = HuggingFaceProvider()
+        with pytest.raises(RuntimeError, match="transcript text"):
+            provider.transcribe(audio_file, model="openai/whisper-large-v3")
+
+
+# ===========================================================================
 # 1. DeepInfra
 # ===========================================================================
 
@@ -56,7 +163,10 @@ class TestDeepInfraProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.deepinfra.com/v1/openai/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -105,7 +215,10 @@ class TestVeniceProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.venice.ai/api/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.venice.ai/api/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -143,7 +256,10 @@ class TestTogetherProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.together.xyz/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.together.xyz/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "openai/whisper-large-v3"
         assert "file" in kwargs["files"]
 
@@ -219,7 +335,10 @@ class TestMistralProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.mistral.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "voxtral-mini-latest"
         # Mistral uses context_bias instead of prompt
         assert "prompt" not in kwargs["data"]
@@ -233,7 +352,9 @@ class TestMistralProvider:
         from sapat.providers.mistral import MistralProvider
 
         provider = MistralProvider()
-        provider.transcribe(audio_file, model="voxtral-mini-latest", prompt="Product: Sapat")
+        provider.transcribe(
+            audio_file, model="voxtral-mini-latest", prompt="Product: Sapat"
+        )
 
         _, kwargs = mock_post.call_args
         assert kwargs["data"]["context_bias"] == "Product: Sapat"
@@ -241,9 +362,9 @@ class TestMistralProvider:
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
     @patch("sapat.providers.mistral.requests.post")
     def test_correct_transcript_uses_chat_endpoint(self, mock_post):
-        chat_response = FakeResponse(payload={
-            "choices": [{"message": {"content": "corrected text"}}]
-        })
+        chat_response = FakeResponse(
+            payload={"choices": [{"message": {"content": "corrected text"}}]}
+        )
         mock_post.return_value = chat_response
 
         from sapat.providers.mistral import MistralProvider
@@ -253,7 +374,9 @@ class TestMistralProvider:
 
         assert result == "corrected text"
         _, kwargs = mock_post.call_args
-        assert mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        assert (
+            mock_post.call_args.args[0] == "https://api.mistral.ai/v1/chat/completions"
+        )
         assert kwargs["json"]["messages"][1]["content"] == "raw text"
 
     @patch.dict(os.environ, {"MISTRAL_API_KEY": "test-key"}, clear=False)
@@ -296,7 +419,10 @@ class TestLemonfoxProvider:
 
         _, kwargs = mock_post.call_args
         assert kwargs["headers"]["Authorization"] == "Bearer test-key"
-        assert mock_post.call_args.args[0] == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "https://api.lemonfox.ai/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -339,7 +465,10 @@ class TestLocalAIProvider:
         _, kwargs = mock_post.call_args
         # No auth header when LOCALAI_API_KEY is not set
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "http://localhost:8080/v1/audio/transcriptions"
+        assert (
+            mock_post.call_args.args[0]
+            == "http://localhost:8080/v1/audio/transcriptions"
+        )
         assert kwargs["data"]["model"] == "whisper-1"
         assert "file" in kwargs["files"]
 
@@ -404,7 +533,9 @@ class TestElevenLabsProvider:
         assert "xi-api-key" in kwargs["headers"]
         assert kwargs["headers"]["xi-api-key"] == "test-key"
         assert "Authorization" not in kwargs["headers"]
-        assert mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        assert (
+            mock_post.call_args.args[0] == "https://api.elevenlabs.io/v1/speech-to-text"
+        )
         # ElevenLabs uses model_id, not model
         assert kwargs["data"]["model_id"] == "scribe_v2"
         assert "file" in kwargs["files"]
