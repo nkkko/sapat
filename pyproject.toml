@@ -31,6 +31,7 @@ whisperx = ["whisperx"]
 picovoice = ["pvleopard"]
 replicate = ["replicate"]
 falai = ["fal-client"]
+pocketsphinx = ["pocketsphinx>=5.0.0"]
 all = [
     "sapat[oracle]",
     "sapat[vosk]",
@@ -39,11 +40,12 @@ all = [
     "sapat[picovoice]",
     "sapat[replicate]",
     "sapat[falai]",
+    "sapat[pocketsphinx]",
 ]
 dev = ["pytest", "pytest-mock", "black", "isort"]
 
 [tool.setuptools.packages.find]
-include = ["sapat"]
+include = ["sapat", "sapat.*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "sapat.__version__.__version__"}

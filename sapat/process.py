@@ -32,27 +32,42 @@ def process_file(
     ext = fmt.value
     converted_file = input_path.with_suffix(f".{ext}")
     txt_file = input_path.with_suffix(".txt")
+    converted_created = False
+    input_is_converted_file = input_path.resolve() == converted_file.resolve()
 
     click.echo(click.style(f"\nProcessing: {input_file}", fg="cyan", bold=True))
 
     # Convert to provider-preferred format
-    if not converted_file.exists():
+    if input_is_converted_file:
+        click.echo(
+            click.style(f"Input is already {ext.upper()}, skipping", fg="yellow")
+        )
+    elif not converted_file.exists():
         with spinner_context(f"Converting to {ext.upper()}...") as spinner:
             try:
                 convert_audio(str(input_path), str(converted_file), quality, fmt)
+                converted_created = True
                 spinner.succeed(f"Conversion to {ext.upper()} completed")
             except Exception as e:
                 spinner.fail(f"Conversion failed: {e}")
                 return
     else:
-        click.echo(click.style(f"{ext.upper()} file already exists, skipping", fg="yellow"))
+        click.echo(
+            click.style(f"{ext.upper()} file already exists, skipping", fg="yellow")
+        )
 
     # Transcribe (with splitting if needed)
     max_size = provider.config.max_file_size_mb
     if should_split_file(str(converted_file), max_size_mb=max_size):
-        click.echo(click.style(f"File is large (>{max_size}MB), splitting into chunks...", fg="yellow"))
+        click.echo(
+            click.style(
+                f"File is large (>{max_size}MB), splitting into chunks...", fg="yellow"
+            )
+        )
         try:
-            result = _process_large_audio(str(converted_file), provider, model, language, prompt, temperature)
+            result = _process_large_audio(
+                str(converted_file), provider, model, language, prompt, temperature
+            )
         except Exception as e:
             click.echo(click.style(f"Error processing large file: {e}", fg="red"))
             return
@@ -87,8 +102,11 @@ def process_file(
     click.echo(click.style(f"Transcription saved to: {txt_file}", fg="green"))
 
     # Cleanup
-    converted_file.unlink()
-    click.echo(click.style("Temporary audio file removed", fg="yellow"))
+    if converted_created:
+        converted_file.unlink()
+        click.echo(click.style("Temporary audio file removed", fg="yellow"))
+    elif input_is_converted_file:
+        click.echo(click.style("Original audio file preserved", fg="yellow"))
 
 
 def _process_large_audio(
@@ -119,10 +137,13 @@ def _process_large_audio(
                     )
                     all_texts.append(result.text.strip())
                 except Exception as e:
-                    click.echo(click.style(f"Warning: chunk {i+1} failed: {e}", fg="yellow"))
+                    click.echo(
+                        click.style(f"Warning: chunk {i+1} failed: {e}", fg="yellow")
+                    )
                     all_texts.append(f"[Chunk {i+1} transcription failed]")
 
         from sapat.providers.base import TranscriptionResult
+
         return TranscriptionResult(text=" ".join(all_texts))
 
     finally:
