@@ -40,7 +40,7 @@ class WhisperXProvider(TranscriptionProvider):
         temperature: float = 0,
         **kwargs,
     ) -> TranscriptionResult:
-        binary = shlex.split(os.getenv("WHISPERX_BINARY", "whisperx"))
+        binary = self._split_command(os.getenv("WHISPERX_BINARY", "whisperx"))
         device = os.getenv("WHISPERX_DEVICE", "cpu")
         compute_type = os.getenv("WHISPERX_COMPUTE_TYPE", "int8")
         batch_size = os.getenv("WHISPERX_BATCH_SIZE", "4")
@@ -126,3 +126,7 @@ class WhisperXProvider(TranscriptionProvider):
     @staticmethod
     def _is_truthy(value) -> bool:
         return str(value).lower() in ("1", "true", "yes", "on")
+
+    @staticmethod
+    def _split_command(value: str) -> list:
+        return shlex.split(value, posix=os.name != "nt")

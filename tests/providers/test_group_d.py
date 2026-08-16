@@ -1,5 +1,5 @@
 # ABOUTME: Tests for local/offline transcription providers (Group D)
-# ABOUTME: Covers Moonshine, Vosk, WhisperX, whisper.cpp, and Picovoice
+# ABOUTME: Covers Moonshine, Vosk, WhisperX, faster-whisper, whisper.cpp, and Picovoice
 
 import os
 import subprocess
@@ -278,6 +278,119 @@ class TestWhisperXProvider:
             assert "test prompt" in cmd
             assert "--hf_token" in cmd
             assert "--diarize" in cmd
+
+
+# ---------------------------------------------------------------------------
+# faster-whisper tests
+# ---------------------------------------------------------------------------
+
+class TestFasterWhisperProvider:
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        from sapat.providers.faster_whisper import FasterWhisperProvider
+        self.provider_cls = FasterWhisperProvider
+
+    def test_config_values(self):
+        cfg = self.provider_cls.config
+        assert cfg.preferred_format.value == "wav"
+        assert cfg.supports_correction is False
+        assert cfg.default_model == "small"
+        assert cfg.extras_key == "faster-whisper"
+        assert "faster_whisper" in cfg.required_packages
+
+    def test_bool_from_env(self):
+        from sapat.providers.faster_whisper import FasterWhisperProvider
+        with patch.dict(os.environ, {"TEST_BOOL": "true"}, clear=False):
+            assert FasterWhisperProvider._bool_from_env("TEST_BOOL") is True
+        with patch.dict(os.environ, {"TEST_BOOL": "off"}, clear=False):
+            assert FasterWhisperProvider._bool_from_env("TEST_BOOL") is False
+        assert FasterWhisperProvider._bool_from_env("MISSING_BOOL", default=True) is True
+
+    def test_validate_rejects_missing_audio_file(self):
+        p = self.provider_cls.__new__(self.provider_cls)
+        with pytest.raises(ValueError, match="Audio file not found"):
+            p._validate_audio_file("/tmp/nonexistent.wav")
+
+    def test_collect_segments(self):
+        p = self.provider_cls.__new__(self.provider_cls)
+        segments = [
+            types.SimpleNamespace(start=0.0, end=1.0, text=" hello "),
+            types.SimpleNamespace(start=1.0, end=2.0, text="world"),
+        ]
+        assert p._collect_segments(segments) == [
+            {"start": 0.0, "end": 1.0, "text": "hello"},
+            {"start": 1.0, "end": 2.0, "text": "world"},
+        ]
+
+    def test_transcribe_uses_faster_whisper_model(self):
+        class FakeWhisperModel:
+            def __init__(self, model, **kwargs):
+                self.model = model
+                self.kwargs = kwargs
+                FakeWhisperModel.last = self
+
+            def transcribe(self, audio_file, **kwargs):
+                self.audio_file = audio_file
+                self.transcribe_kwargs = kwargs
+                return (
+                    [
+                        types.SimpleNamespace(start=0.0, end=1.2, text=" hello "),
+                        types.SimpleNamespace(start=1.2, end=2.4, text="world"),
+                    ],
+                    types.SimpleNamespace(language="en", duration=2.4),
+                )
+
+        fake_module = types.SimpleNamespace(WhisperModel=FakeWhisperModel)
+
+        with tempfile.NamedTemporaryFile(suffix=".wav") as audio:
+            with patch.dict(sys.modules, {"faster_whisper": fake_module}):
+                with patch.dict(
+                    os.environ,
+                    {
+                        "FASTER_WHISPER_DEVICE": "cpu",
+                        "FASTER_WHISPER_COMPUTE_TYPE": "int8",
+                        "FASTER_WHISPER_CPU_THREADS": "2",
+                        "FASTER_WHISPER_NUM_WORKERS": "1",
+                        "FASTER_WHISPER_BEAM_SIZE": "3",
+                        "FASTER_WHISPER_VAD_FILTER": "true",
+                        "FASTER_WHISPER_WORD_TIMESTAMPS": "true",
+                    },
+                    clear=True,
+                ):
+                    p = self.provider_cls.__new__(self.provider_cls)
+                    result = p.transcribe(
+                        audio.name,
+                        "small",
+                        language="en",
+                        prompt="Product name: Sapat",
+                        temperature=0.2,
+                    )
+
+        assert isinstance(result, TranscriptionResult)
+        assert result.text == "hello\nworld"
+        assert result.language == "en"
+        assert result.duration == 2.4
+
+        model_instance = FakeWhisperModel.last
+        assert model_instance.model == "small"
+        assert model_instance.kwargs["device"] == "cpu"
+        assert model_instance.kwargs["compute_type"] == "int8"
+        assert model_instance.kwargs["cpu_threads"] == 2
+
+        transcribe_kwargs = model_instance.transcribe_kwargs
+        assert transcribe_kwargs["language"] == "en"
+        assert transcribe_kwargs["initial_prompt"] == "Product name: Sapat"
+        assert transcribe_kwargs["temperature"] == 0.2
+        assert transcribe_kwargs["beam_size"] == 3
+        assert transcribe_kwargs["vad_filter"] is True
+        assert transcribe_kwargs["word_timestamps"] is True
+
+    def test_missing_dependency_raises_import_error(self):
+        with patch.dict(sys.modules, {"faster_whisper": None}):
+            p = self.provider_cls.__new__(self.provider_cls)
+            with tempfile.NamedTemporaryFile(suffix=".wav") as audio:
+                with pytest.raises(ImportError, match="sapat\\[faster-whisper\\]"):
+                    p.transcribe(audio.name, "small")
 
 
 # ---------------------------------------------------------------------------

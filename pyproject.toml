@@ -28,6 +28,7 @@ oracle = ["oci>=2.126.0"]
 vosk = ["vosk"]
 moonshine = ["moonshine-voice"]
 whisperx = ["whisperx"]
+faster-whisper = ["faster-whisper"]
 picovoice = ["pvleopard"]
 replicate = ["replicate"]
 falai = ["fal-client"]
@@ -36,6 +37,7 @@ all = [
     "sapat[vosk]",
     "sapat[moonshine]",
     "sapat[whisperx]",
+    "sapat[faster-whisper]",
     "sapat[picovoice]",
     "sapat[replicate]",
     "sapat[falai]",
