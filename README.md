@@ -6,6 +6,8 @@ This tool automates the process of transcribing video files using multiple trans
 
 - Converts video files to MP3 format using ffmpeg
 - Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
+- Supports local/offline providers such as faster-whisper, WhisperX, whisper.cpp,
+  Vosk, Moonshine, and PocketSphinx-compatible workflows where installed
 - Supports processing of individual video files or entire directories
 - Cleans up temporary MP3 files after transcription
 - Provides flexibility in selecting the transcription service via configuration
@@ -18,6 +20,7 @@ This tool automates the process of transcribing video files using multiple trans
   - Azure OpenAI API
   - Groq Cloud API
   - OpenAI API
+  - Optional local providers such as faster-whisper
 
 ## Installation
 
@@ -53,6 +56,10 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_MODEL=whisper-1
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
+
+   # faster-whisper local inference
+   FASTER_WHISPER_DEVICE=cpu
+   FASTER_WHISPER_COMPUTE_TYPE=int8
    ```
 
 ## Building and Installing the Package
@@ -115,11 +122,19 @@ sapat <video_file_or_directory> [--language <language>] [--prompt <prompt>] [--t
    - `--api azure` for Azure OpenAI API
    - `--api groq` for Groq Cloud API
    - `--api openai` for OpenAI API
+   - `--provider faster_whisper` for local faster-whisper inference
 
 Example:
 
 ```
 sapat my_video.mp4 --quality H --language es --prompt "This is a test prompt" --temperature 0.5 --api groq
+```
+
+Local faster-whisper example:
+
+```
+pip install 'sapat[faster-whisper]'
+sapat my_video.mp4 --provider faster_whisper --model small --language en
 ```
 
 - If a file is provided, it will process that single file.
