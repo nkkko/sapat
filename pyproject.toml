@@ -31,6 +31,7 @@ whisperx = ["whisperx"]
 picovoice = ["pvleopard"]
 replicate = ["replicate"]
 falai = ["fal-client"]
+sherpa_onnx = ["sherpa-onnx", "numpy"]
 all = [
     "sapat[oracle]",
     "sapat[vosk]",
@@ -39,6 +40,7 @@ all = [
     "sapat[picovoice]",
     "sapat[replicate]",
     "sapat[falai]",
+    "sapat[sherpa_onnx]",
 ]
 dev = ["pytest", "pytest-mock", "black", "isort"]
 
