@@ -1,0 +1,48 @@
+name: Deepgram provider
+
+on:
+  push:
+    paths:
+      - 'sapat/**'
+      - 'tests/test_deepgram.py'
+      - 'pyproject.toml'
+      - '.github/workflows/deepgram.yml'
+  pull_request:
+    paths:
+      - 'sapat/**'
+      - 'tests/test_deepgram.py'
+      - 'pyproject.toml'
+      - '.github/workflows/deepgram.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-and-wheel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install test and build dependencies
+        run: python -m pip install '.[dev]' build
+      - name: Run offline provider contracts
+        run: python -m pytest tests/test_deepgram.py -v
+      - name: Build and install the distribution
+        run: |
+          python -m build --wheel
+          python -m pip install --force-reinstall --no-deps dist/*.whl
+      - name: Discover the provider outside the checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          python -c "from sapat.providers import get_provider; p = get_provider('deepgram'); assert p is not None; assert p.config.default_model == 'nova-3'; print('Installed wheel discovers Deepgram')"
+          sapat --help
