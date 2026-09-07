@@ -4,6 +4,33 @@ This tool automates the process of transcribing video files using multiple trans
 
 ## Features
 
+### Deepgram (current provider CLI)
+
+Set `DEEPGRAM_API_KEY` in your environment or `.env`, install the project with
+`python -m pip install .`, then run:
+
+```bash
+sapat recording.mp4 --provider deepgram --model nova-3 --language en
+```
+
+The provider uses Deepgram's [prerecorded audio REST API](https://developers.deepgram.com/docs/pre-recorded-audio)
+with binary audio upload and smart formatting. No additional SDK is required.
+An empty language (`--language ''`) requests automatic language detection.
+The shared transcription prompt and temperature options are ignored with a
+warning because they do not map to this endpoint. LLM correction is unsupported.
+Deepgram is a hosted service: API requests require an account and may incur charges.
+
+Offline contract tests (no API key or paid requests required):
+
+```bash
+python -m pip install '.[dev]'
+python -m pytest tests/test_deepgram.py
+```
+
+The tests check HTTP request/response handling, not recognition accuracy or live
+service availability. The older `--api` examples below describe the legacy CLI;
+use `--provider` with the current package.
+
 - Converts video files to MP3 format using ffmpeg
 - Supports transcription using Azure OpenAI, Groq, and OpenAI APIs
 - Supports processing of individual video files or entire directories
