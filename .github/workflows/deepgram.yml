@@ -43,6 +43,8 @@ jobs:
           python -m pip install --force-reinstall --no-deps "$RUNNER_TEMP"/sapat-wheel/*.whl
       - name: Discover the provider outside the checkout
         working-directory: ${{ runner.temp }}
+        env:
+          DEEPGRAM_API_KEY: test-only-key
         run: |
           python -c "from sapat.providers import get_provider; p = get_provider('deepgram'); assert p is not None; assert p.config.default_model == 'nova-3'; print('Installed wheel discovers Deepgram')"
           sapat --help
