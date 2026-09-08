@@ -16,6 +16,7 @@ This tool automates the process of transcribing video files using multiple trans
 - ffmpeg installed and available in the system PATH
 - API access for one or more supported services:
   - Azure OpenAI API
+  - Azure AI Speech resource
   - Groq Cloud API
   - OpenAI API
 
@@ -54,6 +55,36 @@ This tool automates the process of transcribing video files using multiple trans
    OPENAI_API_ENDPOINT=https://api.openai.com/v1/audio/transcriptions
    OPENAI_MODEL_NAME_CHAT=gpt-4o
    ```
+
+### Azure AI Speech provider
+
+Sapat can also use Azure AI Speech directly through the short-audio Speech to
+text REST API. This is separate from the Azure OpenAI provider: Azure OpenAI
+uses a Whisper deployment, while `azure_speech` uses a Speech resource key and
+endpoint.
+
+Add these variables to `.env`:
+
+```bash
+AZURE_SPEECH_KEY=your_speech_resource_key
+AZURE_SPEECH_ENDPOINT=https://your-speech-resource.cognitiveservices.azure.com
+# Optional fallback when a resource endpoint is not configured
+AZURE_SPEECH_REGION=
+# Optional: simple or detailed
+AZURE_SPEECH_RESPONSE_FORMAT=simple
+# Optional: masked, removed, or raw
+AZURE_SPEECH_PROFANITY=masked
+```
+
+Run it with:
+
+```bash
+sapat demo.mp4 --provider azure_speech --language en-US
+```
+
+The provider converts input audio to 16 kHz mono WAV before sending it to Azure
+AI Speech. The short-audio REST API is designed for direct requests up to about
+60 seconds, so Sapat keeps chunk size conservative for this provider.
 
 ## Building and Installing the Package
 
