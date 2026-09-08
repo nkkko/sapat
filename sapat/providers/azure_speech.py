@@ -2,7 +2,6 @@
 # ABOUTME: Sends 16 kHz mono WAV audio to the short-audio speech-to-text API
 
 import os
-from pathlib import Path
 from typing import Optional
 
 import requests
@@ -82,7 +81,7 @@ class AzureSpeechProvider(TranscriptionProvider):
         params = self._build_params(language)
         headers = {
             "Ocp-Apim-Subscription-Key": self.api_key,
-            "Content-Type": self._content_type(audio_file),
+            "Content-Type": "audio/wav; codecs=audio/pcm; samplerate=16000",
             "Accept": "application/json",
         }
 
@@ -92,6 +91,7 @@ class AzureSpeechProvider(TranscriptionProvider):
                 headers=headers,
                 params=params,
                 data=f.read(),
+                timeout=60,
             )
 
         if response.status_code != 200:
@@ -199,13 +199,6 @@ class AzureSpeechProvider(TranscriptionProvider):
         if not language:
             return "en-US"
         return LANGUAGE_ALIASES.get(language.lower(), language)
-
-    @staticmethod
-    def _content_type(audio_file: str) -> str:
-        extension = Path(audio_file).suffix.lower()
-        if extension == ".ogg":
-            return "audio/ogg; codecs=opus"
-        return "audio/wav; codecs=audio/pcm; samplerate=16000"
 
     @staticmethod
     def _error_text(response) -> str:

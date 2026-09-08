@@ -124,6 +124,7 @@ class TestAzureSpeechProvider:
             "audio/wav; codecs=audio/pcm; samplerate=16000"
         )
         assert call_kwargs["data"] == b"fake wav audio"
+        assert call_kwargs["timeout"] == 60
 
     @patch.dict(
         os.environ,
