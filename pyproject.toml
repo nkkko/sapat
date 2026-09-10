@@ -45,7 +45,7 @@ all = [
 dev = ["pytest", "pytest-mock", "black", "isort"]
 
 [tool.setuptools.packages.find]
-include = ["sapat"]
+include = ["sapat", "sapat.*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "sapat.__version__.__version__"}
