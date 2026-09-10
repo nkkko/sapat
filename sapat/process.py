@@ -3,6 +3,7 @@
 
 import os
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Optional
 
 import click
@@ -30,13 +31,14 @@ def process_file(
     input_path = Path(input_file)
     fmt = provider.config.preferred_format
     ext = fmt.value
-    converted_file = input_path.with_suffix(f".{ext}")
     txt_file = input_path.with_suffix(".txt")
 
     click.echo(click.style(f"\nProcessing: {input_file}", fg="cyan", bold=True))
 
-    # Convert to provider-preferred format
-    if not converted_file.exists():
+    # Own the converted audio for this run. A matching extension does not
+    # guarantee the required encoding, and existing files belong to the user.
+    with TemporaryDirectory(prefix="sapat_audio_") as temp_dir:
+        converted_file = Path(temp_dir) / f"audio.{ext}"
         with spinner_context(f"Converting to {ext.upper()}...") as spinner:
             try:
                 convert_audio(str(input_path), str(converted_file), quality, fmt)
@@ -44,50 +46,46 @@ def process_file(
             except Exception as e:
                 spinner.fail(f"Conversion failed: {e}")
                 return
-    else:
-        click.echo(click.style(f"{ext.upper()} file already exists, skipping", fg="yellow"))
 
-    # Transcribe (with splitting if needed)
-    max_size = provider.config.max_file_size_mb
-    if should_split_file(str(converted_file), max_size_mb=max_size):
-        click.echo(click.style(f"File is large (>{max_size}MB), splitting into chunks...", fg="yellow"))
-        try:
-            result = _process_large_audio(str(converted_file), provider, model, language, prompt, temperature)
-        except Exception as e:
-            click.echo(click.style(f"Error processing large file: {e}", fg="red"))
-            return
-    else:
-        with spinner_context("Transcribing audio...") as spinner:
-            result = provider.transcribe(
-                str(converted_file),
-                model=model,
-                language=language,
-                prompt=prompt,
-                temperature=temperature,
+        # Transcribe (with splitting if needed)
+        max_size = provider.config.max_file_size_mb
+        if should_split_file(str(converted_file), max_size_mb=max_size):
+            click.echo(click.style(f"File is large (>{max_size}MB), splitting into chunks...", fg="yellow"))
+            try:
+                result = _process_large_audio(str(converted_file), provider, model, language, prompt, temperature)
+            except Exception as e:
+                click.echo(click.style(f"Error processing large file: {e}", fg="red"))
+                return
+        else:
+            with spinner_context("Transcribing audio...") as spinner:
+                result = provider.transcribe(
+                    str(converted_file),
+                    model=model,
+                    language=language,
+                    prompt=prompt,
+                    temperature=temperature,
+                )
+                spinner.succeed("Transcription completed")
+
+        # Correction
+        text = result.text
+        if correct and provider.config.supports_correction:
+            with spinner_context("Correcting transcript...") as spinner:
+                text = provider.correct_transcript(text, temperature)
+                spinner.succeed("Correction completed")
+        elif correct and not provider.config.supports_correction:
+            click.echo(
+                click.style(
+                    f"Warning: Provider '{provider.name}' does not support transcript correction. Skipping.",
+                    fg="yellow",
+                )
             )
-            spinner.succeed("Transcription completed")
 
-    # Correction
-    text = result.text
-    if correct and provider.config.supports_correction:
-        with spinner_context("Correcting transcript...") as spinner:
-            text = provider.correct_transcript(text, temperature)
-            spinner.succeed("Correction completed")
-    elif correct and not provider.config.supports_correction:
-        click.echo(
-            click.style(
-                f"Warning: Provider '{provider.name}' does not support transcript correction. Skipping.",
-                fg="yellow",
-            )
-        )
+        # Write output
+        with open(txt_file, "w", encoding="utf-8") as f:
+            f.write(text)
+        click.echo(click.style(f"Transcription saved to: {txt_file}", fg="green"))
 
-    # Write output
-    with open(txt_file, "w", encoding="utf-8") as f:
-        f.write(text)
-    click.echo(click.style(f"Transcription saved to: {txt_file}", fg="green"))
-
-    # Cleanup
-    converted_file.unlink()
     click.echo(click.style("Temporary audio file removed", fg="yellow"))
 
 
